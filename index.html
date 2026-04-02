@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>Consistency Hub</title>
+<meta name="application-name" content="Consistency Hub"/>
+<meta name="apple-mobile-web-app-title" content="Consistency Hub"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="theme-color" content="#0a0a0a"/>
+<meta name="description" content="Track your daily habits, streaks, and weight — stay consistent."/>
+<link rel="manifest" href="manifest.json"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0a;
+  --surface: #141414;
+  --surface2: #1c1c1c;
+  --border: #242424;
+  --accent: #4ECDC4;
+  --accent-dim: rgba(78,205,196,0.12);
+  --accent-border: rgba(78,205,196,0.25);
+  --text: #e8e8e8;
+  --muted: #5a5a5a;
+  --dim: #2e2e2e;
+  --done-bg: #0d1f1e;
+  --done-border: #1e6b66;
+  --cheat-bg: #1a1500;
+  --cheat-border: #7a5c00;
+  --cheat-color: #f5c842;
+  --red: #ff6b6b;
+  --red-dim: rgba(255,107,107,0.12);
+  --green: #4ECDC4;
+  --warn: #f5a623;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* NAV */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(10,10,10,0.96);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+  padding: 0 20px; height: 52px;
+}
+.nav-brand {
+  font-family: 'Sora', sans-serif;
+  font-size: 17px; font-weight: 700; letter-spacing: 0.5px;
+  color: var(--accent); margin-right: auto;
+  display: flex; align-items: center; gap: 8px;
+}
+.nav-brand-dot {
+  width: 7px; height: 7px; border-radius: 50%; background: var(--accent);
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
+
+.nav-tabs { display: flex; }
+.nav-tab {
+  padding: 0 14px; height: 52px;
+  display: flex; align-items: center;
+  font-size: 11px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase;
+  color: var(--muted); cursor: pointer; border: none; background: none;
+  border-bottom: 2px solid transparent; transition: all 0.2s;
+  position: relative; top: 1px;
+}
+.nav-tab:hover { color: var(--text); }
+.nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* PAGES */
+.page { display: none; padding: 68px 0 80px; min-height: 100dvh; }
+.page.active { display: block; }
+.container { max-width: 780px; margin: 0 auto; padding: 0 20px; }
+
+/* SECTION LABEL */
+.section-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 14px;
+  display: flex; align-items: center; gap: 12px;
+}
+.section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+/* EMPTY STATE */
+.empty-state {
+  text-align: center; padding: 48px 20px; color: var(--muted);
+  font-size: 13px; border: 1px dashed var(--border); border-radius: 12px;
+}
+.empty-state strong {
+  display: block; font-size: 10px; letter-spacing: 2px;
+  text-transform: uppercase; margin-bottom: 6px; color: var(--dim);
+}
+
+/* PAGE A - DASHBOARD */
+.date-hero {
+  text-align: center; padding: 32px 0 28px;
+  border-bottom: 1px solid var(--border); margin-bottom: 24px;
+  position: relative; overflow: hidden;
+}
+.date-hero::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(78,205,196,0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+.date-day-num {
+  font-family: 'Sora', sans-serif;
+  font-size: clamp(90px, 18vw, 150px);
+  font-weight: 700; line-height: 0.85;
+  color: var(--accent); letter-spacing: -6px; display: block;
+}
+.date-sub {
+  font-size: 13px; font-weight: 500;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--muted); margin-top: 10px;
+}
+.date-year { color: var(--accent); opacity: 0.6; }
+
+/* Energy slider */
+.energy-bar-wrap {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 13px 16px; margin-bottom: 16px;
+  display: flex; align-items: center; gap: 14px;
+}
+.energy-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--muted); white-space: nowrap;
+}
+.energy-slider {
+  flex: 1; -webkit-appearance: none; appearance: none;
+  height: 4px; border-radius: 2px; outline: none; cursor: pointer;
+  background: linear-gradient(to right, var(--accent) 0%, var(--accent) 50%, var(--dim) 50%, var(--dim) 100%);
+}
+.energy-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 18px; height: 18px;
+  border-radius: 50%; background: var(--accent);
+  border: 2px solid var(--bg); cursor: pointer;
+  box-shadow: 0 0 6px rgba(78,205,196,0.4);
+}
+.energy-val {
+  font-family: 'Sora', sans-serif; font-size: 18px; font-weight: 700;
+  color: var(--accent); min-width: 24px; text-align: right;
+}
+
+/* Recovery banners */
+.recovery-banner {
+  background: rgba(245,166,35,0.07);
+  border: 1px solid rgba(245,166,35,0.22);
+  border-radius: 12px; padding: 13px 15px; margin-bottom: 10px;
+  display: flex; gap: 12px; align-items: flex-start;
+}
+.rb-icon { font-size: 18px; }
+.rb-body { flex: 1; }
+.rb-title { font-size: 11px; font-weight: 700; color: var(--warn); letter-spacing: 0.5px; margin-bottom: 2px; }
+.rb-msg { font-size: 11px; color: var(--muted); line-height: 1.5; }
+
+/* Goal cards */
+.goal-cards { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+.goal-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; padding: 15px 17px;
+  display: flex; align-items: center; gap: 13px;
+  transition: all 0.3s; position: relative; overflow: hidden;
+}
+.goal-card::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: var(--accent); transition: all 0.3s;
+}
+.goal-card.done { background: var(--done-bg); border-color: var(--done-border); }
+.goal-card.done::before { background: var(--done-border); }
+.goal-card.cheat { background: var(--cheat-bg); border-color: var(--cheat-border); }
+.goal-card.cheat::before { background: var(--cheat-color); }
+.goal-card.warning::before { background: var(--warn); }
+
+/* Toggle button */
+.goal-toggle {
+  width: 38px; height: 38px; min-width: 38px;
+  border: 2px solid var(--border); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.2s;
+  background: none; color: transparent; font-size: 15px;
+}
+.goal-toggle:hover { border-color: var(--accent); background: var(--accent-dim); }
+.goal-card.done .goal-toggle { background: var(--done-border); border-color: var(--done-border); color: #fff; }
+.goal-card.cheat .goal-toggle { background: var(--cheat-border); border-color: var(--cheat-color); color: var(--cheat-color); }
+
+.goal-info { flex: 1; min-width: 0; }
+.goal-name {
+  font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 600;
+  margin-bottom: 5px; transition: all 0.3s;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.goal-card.done .goal-name { text-decoration: line-through; color: var(--muted); }
+.goal-card.cheat .goal-name { color: var(--cheat-color); }
+
+.goal-meta { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+.streak-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: var(--accent-dim); border: 1px solid var(--accent-border);
+  border-radius: 20px; padding: 2px 8px;
+  font-size: 10px; font-weight: 600; color: var(--accent);
+}
+.streak-chip::before { content: '🔥'; font-size: 9px; }
+.warning-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(245,166,35,0.1); border: 1px solid rgba(245,166,35,0.3);
+  border-radius: 20px; padding: 2px 8px;
+  font-size: 10px; font-weight: 600; color: var(--warn);
+}
+
+.cheat-bank { display: flex; gap: 3px; font-size: 13px; margin-top: 6px; }
+
+.goal-right { display: flex; flex-direction: column; align-items: flex-end; gap: 7px; }
+.progress-frac {
+  font-family: 'Sora', sans-serif; font-size: 26px; font-weight: 700;
+  line-height: 1; color: var(--accent); letter-spacing: -1px;
+}
+.progress-frac .denom { color: var(--muted); font-size: 16px; font-weight: 400; }
+.goal-card.done .progress-frac { color: var(--muted); }
+.goal-card.cheat .progress-frac { color: var(--cheat-color); }
+
+.cheat-btn {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.3px;
+  padding: 4px 10px; border-radius: 20px; cursor: pointer;
+  border: 1px solid var(--cheat-border);
+  background: var(--cheat-bg); color: var(--cheat-color);
+  transition: all 0.2s; white-space: nowrap;
+}
+.cheat-btn:hover:not([disabled]) { background: rgba(122,92,0,0.3); }
+.cheat-btn[disabled] { opacity: 0.4; cursor: not-allowed; }
+
+/* PAGE B - GOAL MANAGEMENT */
+.page-header { padding: 28px 0 24px; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+.page-header h1 {
+  font-family: 'Sora', sans-serif; font-size: clamp(26px, 6vw, 38px);
+  font-weight: 700; letter-spacing: -1.5px; color: var(--text); line-height: 1;
+}
+.page-header p { font-size: 13px; color: var(--muted); margin-top: 6px; }
+
+.form-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; padding: 22px; margin-bottom: 24px;
+}
+.form-title {
+  font-family: 'Sora', sans-serif; font-size: 18px; font-weight: 700;
+  letter-spacing: -0.5px; margin-bottom: 18px; color: var(--accent);
+}
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; margin-bottom: 13px; }
+.form-grid.full { grid-template-columns: 1fr; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label {
+  font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--muted);
+}
+.field input, .field textarea {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 11px 13px;
+  color: var(--text); font-family: 'Inter', sans-serif;
+  font-size: 14px; transition: border-color 0.2s; outline: none; width: 100%;
+}
+.field textarea { resize: vertical; min-height: 76px; }
+.field input:focus, .field textarea:focus { border-color: var(--accent); }
+.field input::placeholder, .field textarea::placeholder { color: var(--dim); }
+.form-actions { display: flex; gap: 10px; margin-top: 6px; flex-wrap: wrap; }
+
+/* Buttons */
+.btn {
+  font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 0.5px; padding: 11px 22px;
+  border: none; border-radius: 20px; cursor: pointer; transition: all 0.2s;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.btn-primary { background: var(--accent); color: #0a0a0a; }
+.btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
+.btn-ghost { background: none; color: var(--muted); border: 1px solid var(--border); }
+.btn-ghost:hover { color: var(--text); border-color: var(--muted); }
+.btn-danger { background: none; color: var(--red); border: 1px solid transparent; }
+.btn-danger:hover { border-color: var(--red); background: var(--red-dim); }
+.btn-sm { padding: 6px 12px; font-size: 10px; }
+.btn-export { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+.btn-export:hover { border-color: var(--accent); color: var(--accent); }
+
+.goals-table { width: 100%; border-collapse: collapse; }
+.goals-table th {
+  font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--muted); text-align: left; padding: 8px 11px;
+  border-bottom: 1px solid var(--border);
+}
+.goals-table td {
+  padding: 12px 11px; border-bottom: 1px solid var(--border);
+  font-size: 13px; vertical-align: middle;
+}
+.goals-table tr:last-child td { border-bottom: none; }
+.goals-table tr:hover td { background: var(--surface2); }
+.badge {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  padding: 3px 7px; border-radius: 4px;
+  background: var(--surface2); color: var(--muted); border: 1px solid var(--border);
+}
+
+/* PAGE C - INSIGHTS */
+.metrics-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 24px; }
+.metric-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; padding: 18px 14px; text-align: center;
+  position: relative; overflow: hidden;
+}
+.metric-card::after {
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+  background: var(--accent); opacity: 0.4;
+}
+.metric-value {
+  font-family: 'Sora', sans-serif; font-size: 38px; font-weight: 700;
+  line-height: 1; color: var(--accent); letter-spacing: -2px;
+}
+.metric-label {
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--muted); margin-top: 4px;
+}
+
+/* Quote */
+.quote-block {
+  background: var(--surface); border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 12px 12px 0; padding: 18px 22px; margin-bottom: 12px;
+}
+.quote-text {
+  font-family: 'Sora', sans-serif; font-size: 17px; font-weight: 600;
+  color: var(--text); line-height: 1.5; font-style: italic; letter-spacing: -0.3px;
+}
+.quote-source { font-size: 11px; color: var(--accent); margin-top: 7px; letter-spacing: 1px; }
+
+/* Insight card */
+.insight-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; padding: 20px; position: relative; overflow: hidden; margin-bottom: 13px;
+}
+.insight-card::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent);
+}
+.insight-goal-name {
+  font-family: 'Sora', sans-serif; font-size: 16px; font-weight: 700;
+  letter-spacing: -0.5px; color: var(--text); margin-bottom: 6px;
+}
+.insight-why { font-size: 12px; color: var(--muted); line-height: 1.6; margin-bottom: 14px; }
+
+.streak-row { display: flex; gap: 12px; margin-bottom: 14px; }
+.streak-box {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 11px 14px; flex: 1; text-align: center;
+}
+.streak-box-val {
+  font-family: 'Sora', sans-serif; font-size: 26px; font-weight: 700;
+  color: var(--accent); letter-spacing: -1px; line-height: 1;
+}
+.streak-box-label { font-size: 10px; color: var(--muted); margin-top: 3px; letter-spacing: 1px; }
+
+/* Heatmap */
+.heatmap-inner {
+  background: var(--surface2); border-radius: 10px; padding: 14px; margin-bottom: 13px;
+}
+.heatmap-title { font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 10px; letter-spacing: 1px; text-transform: uppercase; }
+.heatmap-grid { display: flex; flex-wrap: wrap; gap: 3px; }
+.hm-cell { width: 13px; height: 13px; border-radius: 2px; background: var(--dim); }
+.hm-cell.success { background: var(--accent); }
+.hm-cell.cheat { background: var(--cheat-color); }
+.hm-cell.missed { background: var(--red); opacity: 0.55; }
+.hm-cell.future { background: var(--dim); opacity: 0.3; }
+.heatmap-legend { display: flex; gap: 12px; margin-top: 8px; flex-wrap: wrap; }
+.hm-legend-item { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--muted); }
+.hm-legend-dot { width: 9px; height: 9px; border-radius: 2px; }
+
+.insight-stats { display: flex; gap: 14px; flex-wrap: wrap; }
+.insight-stat { font-size: 11px; font-weight: 500; color: var(--muted); }
+.insight-stat strong { color: var(--text); font-weight: 600; }
+
+/* PAGE D - WEIGHT */
+.weight-input-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; padding: 24px; margin-bottom: 24px;
+}
+.weight-top { display: flex; align-items: flex-end; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+.weight-big-input {
+  font-family: 'Sora', sans-serif; font-size: 60px; font-weight: 700;
+  letter-spacing: -3px; background: none; border: none;
+  border-bottom: 3px solid var(--accent); color: var(--accent);
+  width: 190px; outline: none; line-height: 1; padding-bottom: 4px;
+}
+.weight-unit { font-family: 'Sora', sans-serif; font-size: 26px; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
+.weight-trend { flex: 1; text-align: right; min-width: 80px; }
+.trend-arrow { font-size: 32px; line-height: 1; }
+.trend-diff { font-family: 'Sora', sans-serif; font-size: 15px; font-weight: 600; margin-top: 2px; }
+.trend-up { color: var(--red); }
+.trend-down { color: var(--green); }
+.trend-flat { color: var(--muted); }
+
+.weight-avg-strip {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 11px 15px;
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;
+}
+.avg-label { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+.avg-val { font-family: 'Sora', sans-serif; font-size: 18px; font-weight: 700; color: var(--accent); letter-spacing: -1px; }
+
+.weight-table-wrap {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden;
+}
+.weight-table { width: 100%; border-collapse: collapse; }
+.weight-table th {
+  font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--muted); text-align: left; padding: 10px 16px;
+  background: var(--surface2); border-bottom: 1px solid var(--border);
+}
+.weight-table td {
+  padding: 12px 16px; border-bottom: 1px solid var(--border);
+  font-size: 13px; font-family: 'JetBrains Mono', monospace;
+}
+.weight-table tr:last-child td { border-bottom: none; }
+.weight-table tr:hover td { background: var(--surface2); }
+.diff-pos { color: var(--red); }
+.diff-neg { color: var(--green); }
+.diff-zero { color: var(--muted); }
+
+/* TOAST */
+.toast-wrap { position: fixed; bottom: 24px; right: 18px; display: flex; flex-direction: column; gap: 8px; z-index: 999; }
+.toast {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-left: 3px solid var(--accent); color: var(--text);
+  padding: 10px 16px; border-radius: 10px; font-size: 12px; font-weight: 500;
+  animation: slideIn 0.3s ease; max-width: 270px;
+}
+.toast.warn { border-left-color: var(--warn); }
+@keyframes slideIn { from{transform:translateX(110%);opacity:0} to{transform:translateX(0);opacity:1} }
+
+@media (max-width: 600px) {
+  .metrics-row { grid-template-columns: 1fr 1fr; }
+  .form-grid { grid-template-columns: 1fr; }
+  .nav-tab { padding: 0 10px; font-size: 10px; }
+  .weight-top { flex-direction: column; align-items: flex-start; }
+  .weight-trend { text-align: left; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">
+    <div class="nav-brand-dot"></div>
+    Consistency
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('dashboard')">Today</button>
+    <button class="nav-tab" onclick="showPage('goals')">Goals</button>
+    <button class="nav-tab" onclick="showPage('insights')">Insights</button>
+    <button class="nav-tab" onclick="showPage('weight')">Weight</button>
+  </div>
+</nav>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- PAGE A: DASHBOARD -->
+<div class="page active" id="page-dashboard">
+  <div class="container">
+    <div class="date-hero">
+      <span class="date-day-num" id="dateNum">—</span>
+      <div class="date-sub" id="dateSub">—</div>
+    </div>
+    <div class="energy-bar-wrap">
+      <span class="energy-label">Energy</span>
+      <input type="range" class="energy-slider" id="energySlider" min="1" max="10" value="5" oninput="updateEnergy(this.value)">
+      <span class="energy-val" id="energyVal">5</span>
+    </div>
+    <div id="recoveryBanners"></div>
+    <div class="section-label">Today's Goals</div>
+    <div class="goal-cards" id="dashGoalCards"></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:12px;">
+      <button class="btn btn-export btn-sm" onclick="exportCSV()">⬇ Export CSV</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE B: GOALS -->
+<div class="page" id="page-goals">
+  <div class="container">
+    <div class="page-header">
+      <h1>Goal Management</h1>
+      <p>Define what you're building, and why it matters.</p>
+    </div>
+    <div class="form-card">
+      <div class="form-title" id="formTitle">New Goal</div>
+      <input type="hidden" id="editGoalId"/>
+      <div class="form-grid">
+        <div class="field">
+          <label>Goal Name</label>
+          <input type="text" id="goalName" placeholder="e.g. Read every day"/>
+        </div>
+        <div class="field">
+          <label>Target Duration (days)</label>
+          <input type="number" id="goalDays" placeholder="e.g. 30" min="1"/>
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Cheat Days Allowed</label>
+          <input type="number" id="goalCheat" placeholder="e.g. 3" min="0" value="0"/>
+        </div>
+      </div>
+      <div class="form-grid full">
+        <div class="field">
+          <label>Significance — Why does this matter?</label>
+          <textarea id="goalPurpose" placeholder="e.g. To develop focus and reduce screen time before bed..."></textarea>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" onclick="saveGoal()">Save Goal</button>
+        <button class="btn btn-ghost" onclick="resetForm()">Clear</button>
+      </div>
+    </div>
+    <div class="section-label">Active Goals</div>
+    <div id="goalsTableWrap"></div>
+  </div>
+</div>
+
+<!-- PAGE C: INSIGHTS -->
+<div class="page" id="page-insights">
+  <div class="container">
+    <div class="page-header">
+      <h1>Insights</h1>
+      <p>Progress, streaks, and the reasons behind the work.</p>
+    </div>
+    <div class="metrics-row" id="metricsRow"></div>
+    <div class="section-label">Your Why</div>
+    <div id="quotesWrap"></div>
+    <div class="section-label" style="margin-top:20px">Goal Deep-Dives</div>
+    <div id="insightCards"></div>
+  </div>
+</div>
+
+<!-- PAGE D: WEIGHT -->
+<div class="page" id="page-weight">
+  <div class="container">
+    <div class="page-header">
+      <h1>Weight Tracker</h1>
+      <p>Daily weigh-ins. Small changes, long trends.</p>
+    </div>
+    <div class="weight-input-card">
+      <div class="weight-top">
+        <div style="display:flex;align-items:flex-end;gap:8px;">
+          <input type="number" step="0.1" class="weight-big-input" id="weightInput" value="78.1"/>
+          <span class="weight-unit">kg</span>
+        </div>
+        <div class="weight-trend" id="weightTrend">
+          <div class="trend-arrow trend-flat">—</div>
+          <div class="trend-diff trend-flat">No prev. entry</div>
+        </div>
+      </div>
+      <div class="weight-avg-strip">
+        <span class="avg-label">7-Day Rolling Avg</span>
+        <span class="avg-val" id="rollingAvg">—</span>
+      </div>
+      <button class="btn btn-primary" onclick="logWeight()">Log Today's Weight</button>
+    </div>
+    <div class="section-label">Weight Log</div>
+    <div class="weight-table-wrap">
+      <table class="weight-table">
+        <thead><tr><th>Date</th><th>Weight (kg)</th><th>Δ Change</th><th>7d Avg</th></tr></thead>
+        <tbody id="weightTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STORAGE ──────────────────────────────────────────
+const GOALS_KEY  = 'ch_goals_v2';
+const LOGS_KEY   = 'ch_logs_v2';
+const WEIGHT_KEY = 'ch_weights_v2';
+const ENERGY_KEY = 'ch_energy';
+
+function load(key) { try { return JSON.parse(localStorage.getItem(key)) || []; } catch { return []; } }
+function save(key, d) { localStorage.setItem(key, JSON.stringify(d)); }
+function uid() { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
+function todayStr() { return new Date().toISOString().slice(0, 10); }
+function formatDate(s) {
+  return new Date(s + 'T00:00:00').toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+}
+
+// ── MIDNIGHT RESET ───────────────────────────────────
+function checkMidnightReset() {
+  const last  = localStorage.getItem('ch_last_date');
+  const today = todayStr();
+  if (last && last !== today) {
+    const goals = load(GOALS_KEY);
+    const logs  = load(LOGS_KEY);
+    goals.forEach(g => {
+      if (!logs.some(l => l.goalId === g.id && l.date === last))
+        logs.push({ goalId: g.id, date: last, status: 'missed' });
+    });
+    save(LOGS_KEY, logs);
+  }
+  localStorage.setItem('ch_last_date', today);
+}
+
+// ── NAV ──────────────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  const idx = ['dashboard','goals','insights','weight'].indexOf(name);
+  document.querySelectorAll('.nav-tab')[idx].classList.add('active');
+  if (name === 'dashboard') renderDashboard();
+  if (name === 'goals')     renderGoalsPage();
+  if (name === 'insights')  renderInsights();
+  if (name === 'weight')    renderWeightLog();
+}
+
+// ── TOAST ─────────────────────────────────────────────
+function toast(msg, type='') {
+  const wrap = document.getElementById('toastWrap');
+  const el = document.createElement('div');
+  el.className = 'toast' + (type ? ' '+type : '');
+  el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+// ── STREAK HELPERS ────────────────────────────────────
+function isGood(status) { return status === 'complete' || status === true || status === 'cheat'; }
+
+function calcStreak(goalId, logs) {
+  const days = [...new Set(logs.filter(l => l.goalId === goalId && isGood(l.status)).map(l => l.date))].sort().reverse();
+  if (!days.length) return 0;
+  let streak = 0, cursor = new Date(); cursor.setHours(0,0,0,0);
+  for (const day of days) {
+    const d = new Date(day + 'T00:00:00');
+    if (Math.round((cursor - d) / 86400000) <= 1) { streak++; cursor = d; } else break;
+  }
+  return streak;
+}
+
+function calcBestStreak(goalId, logs) {
+  const days = [...new Set(logs.filter(l => l.goalId === goalId && isGood(l.status)).map(l => l.date))].sort();
+  if (!days.length) return 0;
+  let best = 1, cur = 1;
+  for (let i = 1; i < days.length; i++) {
+    const diff = Math.round((new Date(days[i]+'T00:00:00') - new Date(days[i-1]+'T00:00:00')) / 86400000);
+    if (diff === 1) { cur++; if (cur > best) best = cur; } else cur = 1;
+  }
+  return best;
+}
+
+function getMissedConsecutive(goalId, logs) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  let missed = 0;
+  for (let i = 1; i <= 7; i++) {
+    const d = new Date(today); d.setDate(d.getDate() - i);
+    const ds = d.toISOString().slice(0,10);
+    const log = logs.find(l => l.goalId === goalId && l.date === ds);
+    if (!log || log.status === 'missed') missed++;
+    else break;
+  }
+  return missed;
+}
+
+// ── ENERGY ────────────────────────────────────────────
+function updateEnergy(val) {
+  document.getElementById('energyVal').textContent = val;
+  const pct = (val - 1) / 9 * 100;
+  document.getElementById('energySlider').style.background =
+    `linear-gradient(to right, var(--accent) 0%, var(--accent) ${pct}%, var(--dim) ${pct}%, var(--dim) 100%)`;
+  save(ENERGY_KEY, val);
+}
+
+// ── PAGE A: DASHBOARD ─────────────────────────────────
+function renderDashboard() {
+  const now = new Date();
+  document.getElementById('dateNum').textContent = now.getDate();
+  document.getElementById('dateSub').innerHTML =
+    now.toLocaleDateString('en-US', { weekday:'long' }) + ' &nbsp;·&nbsp; ' +
+    now.toLocaleDateString('en-US', { month:'long' }) +
+    ' <span class="date-year">' + now.getFullYear() + '</span>';
+
+  const energy = localStorage.getItem(ENERGY_KEY) || 5;
+  document.getElementById('energySlider').value = energy;
+  updateEnergy(energy);
+
+  const goals = load(GOALS_KEY);
+  const logs  = load(LOGS_KEY);
+  const today = todayStr();
+
+  // Recovery banners
+  const bannerWrap = document.getElementById('recoveryBanners');
+  bannerWrap.innerHTML = '';
+  goals.forEach(g => {
+    const missed = getMissedConsecutive(g.id, logs);
+    const en = parseInt(localStorage.getItem(ENERGY_KEY) || 5);
+    if (missed === 1) {
+      bannerWrap.innerHTML += `<div class="recovery-banner"><div class="rb-icon">⚠️</div><div class="rb-body"><div class="rb-title">Streak Warning — ${g.name}</div><div class="rb-msg">You missed yesterday. Don't miss today — two in a row breaks the streak.</div></div></div>`;
+    } else if (missed === 2) {
+      const hint = en <= 4 ? 'Try a 2-minute version today — the minimum counts.' : 'Two days missed. A half-effort session today saves your momentum.';
+      bannerWrap.innerHTML += `<div class="recovery-banner"><div class="rb-icon">🛟</div><div class="rb-body"><div class="rb-title">Buffer Mode — ${g.name}</div><div class="rb-msg">${hint}</div></div></div>`;
+    } else if (missed >= 3) {
+      bannerWrap.innerHTML += `<div class="recovery-banner"><div class="rb-icon">🔄</div><div class="rb-body"><div class="rb-title">Re-commitment Needed — ${g.name}</div><div class="rb-msg">3+ days missed. Tap complete today to restart your streak fresh.</div></div></div>`;
+    }
+  });
+
+  const wrap = document.getElementById('dashGoalCards');
+  if (!goals.length) {
+    wrap.innerHTML = `<div class="empty-state"><strong>No goals yet</strong>Head to Goals to create your first one.</div>`;
+    return;
+  }
+
+  const en = parseInt(localStorage.getItem(ENERGY_KEY) || 5);
+
+  wrap.innerHTML = goals.map(g => {
+    const todayLog   = logs.find(l => l.goalId === g.id && l.date === today);
+    const todayStatus = todayLog ? todayLog.status : null;
+    const isDone  = todayStatus === 'complete' || todayStatus === true;
+    const isCheat = todayStatus === 'cheat';
+    const missed  = getMissedConsecutive(g.id, logs);
+
+    const completedDays = new Set(logs.filter(l => l.goalId === g.id && (l.status === 'complete' || l.status === true)).map(l => l.date)).size;
+    const cheatUsed    = logs.filter(l => l.goalId === g.id && l.status === 'cheat').length;
+    const cheatAllowed = g.cheatDays || 0;
+    const cheatLeft    = cheatAllowed - cheatUsed;
+    const streak       = calcStreak(g.id, logs);
+
+    let hearts = '';
+    for (let i = 0; i < cheatAllowed; i++) hearts += i < cheatUsed ? '🩶' : '❤️';
+
+    const cardClass    = isDone ? 'done' : isCheat ? 'cheat' : missed >= 1 ? 'warning' : '';
+    const toggleIcon   = isDone ? '✓' : isCheat ? '◑' : '';
+    const cheatDisabled = cheatLeft <= 0 || isDone || isCheat;
+
+    let adaptHint = '';
+    if (!isDone && !isCheat) {
+      if (en >= 8) adaptHint = `<span style="font-size:10px;color:var(--accent);opacity:0.8">⚡ Push mode</span>`;
+      else if (en <= 3) adaptHint = `<span style="font-size:10px;color:var(--warn)">🌿 Conservation</span>`;
+    }
+
+    return `<div class="goal-card ${cardClass}" id="card-${g.id}">
+      <button class="goal-toggle" onclick="toggleGoal('${g.id}')">${toggleIcon}</button>
+      <div class="goal-info">
+        <div class="goal-name">${g.name}</div>
+        <div class="goal-meta">
+          ${streak > 0 ? `<span class="streak-chip">${streak}d streak</span>` : ''}
+          ${missed >= 1 && !isDone && !isCheat ? `<span class="warning-chip">${missed} missed</span>` : ''}
+          ${adaptHint}
+        </div>
+        ${cheatAllowed > 0 ? `<div class="cheat-bank" title="${cheatLeft} cheat days left">${hearts}</div>` : ''}
+      </div>
+      <div class="goal-right">
+        <div class="progress-frac">${completedDays}<span class="denom">/${g.totalDays}</span></div>
+        ${cheatAllowed > 0 ? `<button class="cheat-btn" onclick="useCheatDay('${g.id}')" ${cheatDisabled ? 'disabled' : ''}>${isCheat ? '✓ Safe Miss' : '🛡 Safe Miss'}</button>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleGoal(goalId) {
+  const logs  = load(LOGS_KEY);
+  const today = todayStr();
+  const idx   = logs.findIndex(l => l.goalId === goalId && l.date === today);
+  if (idx !== -1) {
+    if (isGood(logs[idx].status) && logs[idx].status !== 'cheat') logs.splice(idx, 1);
+    else logs[idx].status = 'complete';
+  } else {
+    logs.push({ goalId, date: today, status: 'complete' });
+  }
+  save(LOGS_KEY, logs);
+  renderDashboard();
+}
+
+function useCheatDay(goalId) {
+  const logs    = load(LOGS_KEY);
+  const goals   = load(GOALS_KEY);
+  const g       = goals.find(g => g.id === goalId);
+  if (!g) return;
+  const cheatUsed = logs.filter(l => l.goalId === goalId && l.status === 'cheat').length;
+  if (cheatUsed >= g.cheatDays) { toast('No cheat days remaining!', 'warn'); return; }
+  const today = todayStr();
+  const idx   = logs.findIndex(l => l.goalId === goalId && l.date === today);
+  if (idx !== -1) logs[idx].status = 'cheat';
+  else logs.push({ goalId, date: today, status: 'cheat' });
+  save(LOGS_KEY, logs);
+  toast('Safe Miss used 🛡');
+  renderDashboard();
+}
+
+// ── PAGE B: GOALS ─────────────────────────────────────
+function saveGoal() {
+  const name    = document.getElementById('goalName').value.trim();
+  const days    = parseInt(document.getElementById('goalDays').value);
+  const cheat   = parseInt(document.getElementById('goalCheat').value) || 0;
+  const purpose = document.getElementById('goalPurpose').value.trim();
+  const editId  = document.getElementById('editGoalId').value;
+
+  if (!name || !days || days < 1) { toast('Please fill in Goal Name and Target Days.', 'warn'); return; }
+
+  const goals = load(GOALS_KEY);
+  if (editId) {
+    const idx = goals.findIndex(g => g.id === editId);
+    if (idx !== -1) goals[idx] = { ...goals[idx], name, totalDays: days, cheatDays: cheat, purpose };
+    toast('Goal updated.');
+  } else {
+    goals.push({ id: uid(), name, totalDays: days, cheatDays: cheat, purpose, createdAt: new Date().toISOString() });
+    toast('Goal created! 🎯');
+  }
+  save(GOALS_KEY, goals);
+  resetForm();
+  renderGoalsPage();
+}
+
+function editGoal(id) {
+  const g = load(GOALS_KEY).find(g => g.id === id);
+  if (!g) return;
+  document.getElementById('editGoalId').value  = g.id;
+  document.getElementById('goalName').value    = g.name;
+  document.getElementById('goalDays').value    = g.totalDays;
+  document.getElementById('goalCheat').value   = g.cheatDays;
+  document.getElementById('goalPurpose').value = g.purpose || '';
+  document.getElementById('formTitle').textContent = 'Edit Goal';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function deleteGoal(id) {
+  if (!confirm('Delete this goal and all its logs?')) return;
+  save(GOALS_KEY, load(GOALS_KEY).filter(g => g.id !== id));
+  save(LOGS_KEY,  load(LOGS_KEY).filter(l => l.goalId !== id));
+  toast('Goal deleted.');
+  renderGoalsPage();
+}
+
+function resetForm() {
+  ['editGoalId','goalName','goalDays','goalPurpose'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('goalCheat').value = '0';
+  document.getElementById('formTitle').textContent = 'New Goal';
+}
+
+function renderGoalsPage() {
+  const goals = load(GOALS_KEY);
+  const logs  = load(LOGS_KEY);
+  const wrap  = document.getElementById('goalsTableWrap');
+  if (!goals.length) {
+    wrap.innerHTML = `<div class="empty-state"><strong>No goals yet</strong>Create your first goal above.</div>`;
+    return;
+  }
+  wrap.innerHTML = `<table class="goals-table">
+    <thead><tr><th>Goal</th><th>Progress</th><th>Cheat Bank</th><th>Streak</th><th></th></tr></thead>
+    <tbody>${goals.map(g => {
+      const done      = new Set(logs.filter(l => l.goalId === g.id && (l.status === 'complete' || l.status === true)).map(l => l.date)).size;
+      const cheatUsed = logs.filter(l => l.goalId === g.id && l.status === 'cheat').length;
+      const pct       = Math.round((done / g.totalDays) * 100);
+      const streak    = calcStreak(g.id, logs);
+      return `<tr>
+        <td><strong>${g.name}</strong>${g.purpose ? `<br><span style="font-size:11px;color:var(--muted);font-style:italic">${g.purpose.slice(0,50)}${g.purpose.length>50?'…':''}</span>` : ''}</td>
+        <td><span class="badge">${done}/${g.totalDays} · ${pct}%</span></td>
+        <td><span class="badge">${cheatUsed}/${g.cheatDays}</span></td>
+        <td><span class="badge">${streak}d</span></td>
+        <td style="display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap;">
+          <button class="btn btn-ghost btn-sm" onclick="editGoal('${g.id}')">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteGoal('${g.id}')">Delete</button>
+        </td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table>`;
+}
+
+// ── PAGE C: INSIGHTS ──────────────────────────────────
+function renderInsights() {
+  const goals = load(GOALS_KEY);
+  const logs  = load(LOGS_KEY);
+
+  let totalDone = 0, totalTarget = 0, maxStreak = 0;
+  goals.forEach(g => {
+    const done = new Set(logs.filter(l => l.goalId === g.id && (l.status === 'complete' || l.status === true)).map(l => l.date)).size;
+    totalDone   += done;
+    totalTarget += g.totalDays;
+    maxStreak    = Math.max(maxStreak, calcStreak(g.id, logs));
+  });
+  const overallPct = totalTarget ? Math.round((totalDone / totalTarget) * 100) : 0;
+
+  document.getElementById('metricsRow').innerHTML = `
+    <div class="metric-card"><div class="metric-value">${goals.length}</div><div class="metric-label">Active Goals</div></div>
+    <div class="metric-card"><div class="metric-value">${maxStreak}</div><div class="metric-label">Best Streak</div></div>
+    <div class="metric-card"><div class="metric-value">${overallPct}%</div><div class="metric-label">Completion</div></div>`;
+
+  // Significance quotes
+  const qWrap = document.getElementById('quotesWrap');
+  const withP = goals.filter(g => g.purpose);
+  qWrap.innerHTML = withP.length
+    ? withP.map(g => `<div class="quote-block"><div class="quote-text">"${g.purpose}"</div><div class="quote-source">— ${g.name}</div></div>`).join('')
+    : `<div class="empty-state"><strong>No significance written</strong>Add a "Why" to your goals to see it here.</div>`;
+
+  const wrap = document.getElementById('insightCards');
+  if (!goals.length) { wrap.innerHTML = `<div class="empty-state"><strong>Nothing to show</strong>Create goals first.</div>`; return; }
+
+  wrap.innerHTML = goals.map(g => {
+    const done       = new Set(logs.filter(l => l.goalId === g.id && (l.status === 'complete' || l.status === true)).map(l => l.date)).size;
+    const cheatUsed  = logs.filter(l => l.goalId === g.id && l.status === 'cheat').length;
+    const pct        = Math.round(((done + cheatUsed) / g.totalDays) * 100);
+    const streak     = calcStreak(g.id, logs);
+    const best       = calcBestStreak(g.id, logs);
+
+    // Heatmap
+    const start = new Date(g.createdAt || new Date().toISOString());
+    start.setHours(0,0,0,0);
+    const todayD = new Date(); todayD.setHours(0,0,0,0);
+    const cells = [];
+    for (let i = 0; i < g.totalDays; i++) {
+      const d = new Date(start); d.setDate(d.getDate() + i);
+      const ds = d.toISOString().slice(0,10);
+      const log = logs.find(l => l.goalId === g.id && l.date === ds);
+      let cls = d > todayD ? 'future' : (!log || log.status === 'missed') ? 'missed' : log.status === 'cheat' ? 'cheat' : 'success';
+      cells.push(`<div class="hm-cell ${cls}" title="${ds}"></div>`);
+    }
+
+    return `<div class="insight-card">
+      <div class="insight-goal-name">${g.name}</div>
+      ${g.purpose ? `<div class="insight-why">"${g.purpose}"</div>` : ''}
+      <div class="streak-row">
+        <div class="streak-box"><div class="streak-box-val">${streak}</div><div class="streak-box-label">Current Streak</div></div>
+        <div class="streak-box"><div class="streak-box-val">${best}</div><div class="streak-box-label">All-Time Best</div></div>
+      </div>
+      <div class="heatmap-inner">
+        <div class="heatmap-title">${g.totalDays}-Day Heatmap</div>
+        <div class="heatmap-grid">${cells.join('')}</div>
+        <div class="heatmap-legend">
+          <div class="hm-legend-item"><div class="hm-legend-dot" style="background:var(--accent)"></div>Done</div>
+          <div class="hm-legend-item"><div class="hm-legend-dot" style="background:var(--cheat-color)"></div>Cheat</div>
+          <div class="hm-legend-item"><div class="hm-legend-dot" style="background:var(--red)"></div>Missed</div>
+          <div class="hm-legend-item"><div class="hm-legend-dot" style="background:var(--dim)"></div>Upcoming</div>
+        </div>
+      </div>
+      <div class="insight-stats">
+        <div class="insight-stat">Completed <strong>${done}/${g.totalDays}</strong></div>
+        <div class="insight-stat">Cheat Used <strong>${cheatUsed}/${g.cheatDays}</strong></div>
+        <div class="insight-stat">Progress <strong>${pct}%</strong></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── PAGE D: WEIGHT ─────────────────────────────────────
+function calcRollingAvg(weights, upToDate, days=7) {
+  const sorted = weights.filter(w => w.date <= upToDate).sort((a,b) => b.date.localeCompare(a.date)).slice(0, days);
+  return sorted.length ? sorted.reduce((s,w) => s + w.value, 0) / sorted.length : null;
+}
+
+function logWeight() {
+  const val = parseFloat(document.getElementById('weightInput').value);
+  if (isNaN(val) || val <= 0) { toast('Enter a valid weight.', 'warn'); return; }
+  const weights = load(WEIGHT_KEY);
+  const today   = todayStr();
+  const idx     = weights.findIndex(w => w.date === today);
+  if (idx !== -1) { weights[idx].value = val; toast('Weight updated.'); }
+  else { weights.push({ date: today, value: val }); toast('Weight logged! ⚖️'); }
+  save(WEIGHT_KEY, weights);
+  renderWeightLog();
+}
+
+function renderWeightLog() {
+  const weights = load(WEIGHT_KEY).sort((a,b) => b.date.localeCompare(a.date));
+  const trendEl = document.getElementById('weightTrend');
+  const avgEl   = document.getElementById('rollingAvg');
+
+  if (weights.length >= 2) {
+    const diff = weights[0].value - weights[1].value;
+    const sign = diff > 0 ? '+' : '';
+    const cls  = diff > 0 ? 'trend-up' : diff < 0 ? 'trend-down' : 'trend-flat';
+    const arrow = diff > 0 ? '↑' : diff < 0 ? '↓' : '→';
+    trendEl.innerHTML = `<div class="trend-arrow ${cls}">${arrow}</div><div class="trend-diff ${cls}">${sign}${diff.toFixed(1)} kg</div>`;
+  } else {
+    trendEl.innerHTML = `<div class="trend-arrow trend-flat">—</div><div class="trend-diff trend-flat">${weights.length ? 'First entry' : 'No entries yet'}</div>`;
+  }
+
+  const avg = calcRollingAvg(weights, todayStr());
+  avgEl.textContent = avg !== null ? avg.toFixed(1) + ' kg' : '—';
+
+  const tbody = document.getElementById('weightTableBody');
+  if (!weights.length) {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:32px;font-size:12px;">No entries yet — log your first weight above.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = weights.map((w, i) => {
+    const prev    = weights[i + 1];
+    let diffHtml  = '<span class="diff-zero">—</span>';
+    if (prev) {
+      const diff = w.value - prev.value;
+      const sign = diff > 0 ? '+' : '';
+      const cls  = diff > 0 ? 'diff-pos' : diff < 0 ? 'diff-neg' : 'diff-zero';
+      diffHtml   = `<span class="${cls}">${sign}${diff.toFixed(1)}</span>`;
+    }
+    const ra = calcRollingAvg(weights, w.date);
+    return `<tr>
+      <td>${formatDate(w.date)}</td>
+      <td><strong>${w.value.toFixed(1)}</strong></td>
+      <td>${diffHtml}</td>
+      <td style="color:var(--muted)">${ra !== null ? ra.toFixed(1) : '—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── EXPORT CSV ────────────────────────────────────────
+function exportCSV() {
+  const goals   = load(GOALS_KEY);
+  const logs    = load(LOGS_KEY);
+  const weights = load(WEIGHT_KEY);
+  let csv = 'Type,GoalName,Date,Status\n';
+  logs.forEach(l => {
+    const g = goals.find(g => g.id === l.goalId);
+    csv += `log,"${g ? g.name : 'Unknown'}",${l.date},${l.status}\n`;
+  });
+  csv += '\nDate,Weight(kg),7dAvg\n';
+  weights.sort((a,b) => a.date.localeCompare(b.date)).forEach(w => {
+    const avg = calcRollingAvg(weights, w.date);
+    csv += `${w.date},${w.value.toFixed(1)},${avg !== null ? avg.toFixed(1) : ''}\n`;
+  });
+  const blob = new Blob([csv], { type:'text/csv' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'consistency-hub-export.csv'; a.click();
+  URL.revokeObjectURL(url);
+  toast('CSV exported!');
+}
+
+// ── INIT ──────────────────────────────────────────────
+checkMidnightReset();
+renderDashboard();
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
