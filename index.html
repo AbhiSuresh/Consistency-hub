@@ -122,6 +122,9 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,10,0.9
 .quit-counter-label{font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}
 .quit-add-btn{font-size:10px;font-weight:700;letter-spacing:0.3px;padding:5px 12px;border-radius:20px;cursor:pointer;border:1px solid var(--quit-border);background:var(--quit-dim);color:var(--quit);transition:all 0.2s;}
 .quit-add-btn:hover{background:rgba(255,107,107,0.2);}
+.quit-undo-btn{font-size:10px;font-weight:700;letter-spacing:0.3px;padding:5px 12px;border-radius:20px;cursor:pointer;border:1px solid var(--border);background:var(--surface2);color:var(--muted);transition:all 0.2s;}
+.quit-undo-btn:hover:not([disabled]){border-color:var(--muted);color:var(--text);}
+.quit-undo-btn[disabled]{opacity:0.3;cursor:not-allowed;}
 .cheat-btn{font-size:10px;font-weight:600;letter-spacing:0.3px;padding:4px 10px;border-radius:20px;cursor:pointer;border:1px solid var(--cheat-border);background:var(--cheat-bg);color:var(--cheat-color);transition:all 0.2s;white-space:nowrap;}
 .cheat-btn:hover:not([disabled]){background:rgba(122,92,0,0.3);}
 .cheat-btn[disabled]{opacity:0.4;cursor:not-allowed;}
@@ -716,7 +719,10 @@ function renderDashGoalCards() {
             '<div class="quit-counter-frac" style="' + (exceeded ? 'color:var(--red)' : '') + '">' + todayCount + '<span style="color:var(--muted);font-size:16px;">/' + limit + '</span></div>' +
             '<div class="quit-counter-label">today</div>' +
           '</div>' +
-          '<button class="quit-add-btn" onclick="incrementQuit(\'' + g.id + '\')">+ Log One</button>' +
+          '<div style="display:flex;gap:6px;">' +
+            '<button class="quit-undo-btn" onclick="decrementQuit(\'' + g.id + '\')" ' + (todayCount <= 0 ? 'disabled' : '') + '>− Undo</button>' +
+            '<button class="quit-add-btn" onclick="incrementQuit(\'' + g.id + '\')">+ Log One</button>' +
+          '</div>' +
         '</div>' +
       '</div>';
       return;
@@ -760,7 +766,6 @@ function renderDashGoalCards() {
         '<div class="goal-meta">' +
           (streak > 0 ? '<span class="streak-chip">' + streak + 'd streak</span>' : '') +
           (isMissed ? '<span class="miss-chip">✕ Missed</span>' : '') +
-          (missed >= 1 && !isDone && !isCheat && !isMissed && selectedDate === todayStr() ? '<span class="warning-chip">' + missed + ' missed</span>' : '') +
         '</div>' +
         (cheatAllowed > 0 ? '<div class="cheat-bank">' + hearts + '</div>' : '') +
       '</div>' +
@@ -789,6 +794,17 @@ function incrementQuit(goalId) {
   var count = quitCounts[qKey];
   if (count >= limit) toast('⚠ Daily limit of ' + limit + ' reached!', 'warn');
   else toast('Logged: ' + count + '/' + limit + ' today');
+  renderDashGoalCards();
+}
+
+function decrementQuit(goalId) {
+  var quitCounts = loadObj(QUIT_KEY);
+  var qKey = goalId + '_' + selectedDate;
+  var current = quitCounts[qKey] || 0;
+  if (current <= 0) return;
+  quitCounts[qKey] = current - 1;
+  save(QUIT_KEY, quitCounts);
+  toast('Entry removed. (' + quitCounts[qKey] + ' logged today)');
   renderDashGoalCards();
 }
 
