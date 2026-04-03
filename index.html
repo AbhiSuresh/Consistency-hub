@@ -86,6 +86,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,10,0.9
 .miss-btn{font-size:10px;font-weight:600;letter-spacing:0.3px;padding:4px 10px;border-radius:20px;cursor:pointer;border:1px solid rgba(255,107,107,0.3);background:rgba(255,107,107,0.08);color:var(--red);transition:all 0.2s;white-space:nowrap;}
 .miss-btn:hover:not([disabled]){background:rgba(255,107,107,0.18);}
 .miss-btn[disabled]{opacity:0.4;cursor:not-allowed;}
+.miss-btn.active-miss{background:rgba(255,107,107,0.18);border-color:var(--red);font-weight:700;}
 .miss-chip{display:inline-flex;align-items:center;gap:4px;background:rgba(255,107,107,0.1);border:1px solid rgba(255,107,107,0.3);border-radius:20px;padding:2px 8px;font-size:10px;font-weight:600;color:var(--red);}
 .goal-cards{display:flex;flex-direction:column;gap:10px;margin-bottom:16px;}
 .goal-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px 20px;display:flex;align-items:center;gap:14px;transition:all 0.3s;position:relative;overflow:hidden;min-height:84px;}
@@ -753,7 +754,7 @@ function renderDashGoalCards() {
     var missDisabled  = isDone || isCheat || isMissed;
 
     html += '<div class="goal-card ' + cardClass + '" id="card-' + g.id + '">' +
-      '<button class="goal-toggle" onclick="toggleGoal(\'' + g.id + '\')" ' + (isMissed ? 'disabled style="opacity:0.35;cursor:not-allowed"' : '') + '>' + toggleIcon + '</button>' +
+      '<button class="goal-toggle" onclick="toggleGoal(\'' + g.id + '\')">' + toggleIcon + '</button>' +
       '<div class="goal-info">' +
         '<div class="goal-name">' + esc(g.name) + '</div>' +
         '<div class="goal-meta">' +
@@ -767,7 +768,7 @@ function renderDashGoalCards() {
         '<div class="progress-frac">' + completedDays + '<span class="denom">/' + g.totalDays + '</span></div>' +
         '<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">' +
           (cheatAllowed > 0 ? '<button class="cheat-btn" onclick="useCheatDay(\'' + g.id + '\')" ' + (cheatDisabled ? 'disabled' : '') + '>' + (isCheat ? '✓ Safe Miss' : '🛡 Safe Miss') + '</button>' : '') +
-          '<button class="miss-btn" onclick="markMissed(\'' + g.id + '\')" ' + (missDisabled ? 'disabled' : '') + '>' + (isMissed ? '✕ Missed' : '✕ Miss') + '</button>' +
+          '<button class="miss-btn' + (isMissed ? ' active-miss' : '') + '" onclick="markMissed(\'' + g.id + '\')" ' + (isDone || isCheat ? 'disabled' : '') + '>' + (isMissed ? '↩ Undo Miss' : '✕ Miss') + '</button>' +
         '</div>' +
       '</div>' +
     '</div>';
@@ -796,8 +797,14 @@ function toggleGoal(goalId) {
   var idx = -1;
   for (var i = 0; i < logs.length; i++) { if (logs[i].goalId === goalId && logs[i].date === selectedDate) { idx = i; break; } }
   if (idx !== -1) {
-    if (isGood(logs[idx].status) && logs[idx].status !== 'cheat') logs.splice(idx, 1);
-    else logs[idx].status = 'complete';
+    var status = logs[idx].status;
+    if (status === 'missed') {
+      logs[idx].status = 'complete'; // override missed → complete
+    } else if (isGood(status) && status !== 'cheat') {
+      logs.splice(idx, 1); // un-complete
+    } else {
+      logs[idx].status = 'complete';
+    }
   } else {
     logs.push({ goalId: goalId, date: selectedDate, status: 'complete' });
   }
@@ -827,10 +834,17 @@ function markMissed(goalId) {
   var logs = load(LOGS_KEY);
   var idx = -1;
   for (var i = 0; i < logs.length; i++) { if (logs[i].goalId === goalId && logs[i].date === selectedDate) { idx = i; break; } }
-  if (idx !== -1) logs[idx].status = 'missed';
-  else logs.push({ goalId: goalId, date: selectedDate, status: 'missed' });
+  if (idx !== -1 && logs[idx].status === 'missed') {
+    logs.splice(idx, 1); // undo missed
+    toast('Missed mark removed.');
+  } else if (idx !== -1) {
+    logs[idx].status = 'missed';
+    toast('Marked as missed.');
+  } else {
+    logs.push({ goalId: goalId, date: selectedDate, status: 'missed' });
+    toast('Marked as missed.');
+  }
   save(LOGS_KEY, logs);
-  toast('Marked as missed.');
   renderDashGoalCards();
 }
 
@@ -968,34 +982,48 @@ function generateSignificance(name, type) {
 }
 
 function saveGoal() {
-  var name      = document.getElementById('goalName').value.trim();
-  var days      = parseInt(document.getElementById('goalDays').value);
-  var cheat     = parseInt(document.getElementById('goalCheat').value) || 0;
-  var purpose   = document.getElementById('goalPurpose').value.trim();
-  var editId    = document.getElementById('editGoalId').value;
-  var type      = document.getElementById('goalType').value || 'build';
-  var quitLimit = parseInt(document.getElementById('goalQuitLimit').value) || null;
+  try {
+    var name      = (document.getElementById('goalName').value || '').trim();
+    var daysRaw   = (document.getElementById('goalDays').value || '').trim();
+    var days      = parseInt(daysRaw);
+    var cheat     = parseInt(document.getElementById('goalCheat').value) || 0;
+    var purpose   = (document.getElementById('goalPurpose').value || '').trim();
+    var editId    = document.getElementById('editGoalId').value || '';
+    var typeEl    = document.getElementById('goalType');
+    var type      = (typeEl && typeEl.value) ? typeEl.value : 'build';
+    var quitLimit = parseInt(document.getElementById('goalQuitLimit').value) || 1;
 
-  if (!name || !days || days < 1) { toast('Please fill in Goal Name and Target Days.', 'warn'); return; }
-
-  if (!purpose) { generateSignificance(name, type); purpose = document.getElementById('goalPurpose').value; }
-
-  var goals = load(GOALS_KEY);
-  if (editId) {
-    for (var i = 0; i < goals.length; i++) {
-      if (goals[i].id === editId) {
-        goals[i] = Object.assign({}, goals[i], { name: name, totalDays: days, cheatDays: cheat, purpose: purpose, type: type, quitLimit: quitLimit });
-        break;
-      }
+    if (!name) { toast('Please enter a Goal Name.', 'warn'); return; }
+    if (type === 'build' && (!daysRaw || isNaN(days) || days < 1)) {
+      toast('Please enter a valid Target Duration (days).', 'warn'); return;
     }
-    toast('Goal updated.');
-  } else {
-    goals.push({ id: uid(), name: name, totalDays: days, cheatDays: cheat, purpose: purpose, type: type, quitLimit: quitLimit, createdAt: new Date().toISOString() });
-    toast('Goal created! 🎯');
+    if (type === 'quit') days = isNaN(days) ? 0 : days;
+
+    if (!purpose) {
+      generateSignificance(name, type);
+      purpose = (document.getElementById('goalPurpose').value || '').trim();
+    }
+
+    var goals = load(GOALS_KEY);
+    if (editId) {
+      for (var i = 0; i < goals.length; i++) {
+        if (goals[i].id === editId) {
+          goals[i] = Object.assign({}, goals[i], { name: name, totalDays: days, cheatDays: cheat, purpose: purpose, type: type, quitLimit: quitLimit });
+          break;
+        }
+      }
+      toast('Goal updated. ✓');
+    } else {
+      goals.push({ id: uid(), name: name, totalDays: days, cheatDays: cheat, purpose: purpose, type: type, quitLimit: quitLimit, createdAt: new Date().toISOString() });
+      toast('Goal created! 🎯');
+    }
+    save(GOALS_KEY, goals);
+    resetForm();
+    renderGoalsPage();
+  } catch(err) {
+    toast('Error saving goal: ' + err.message, 'warn');
+    console.error('saveGoal error:', err);
   }
-  save(GOALS_KEY, goals);
-  resetForm();
-  renderGoalsPage();
 }
 
 function editGoal(id) {
@@ -1357,8 +1385,10 @@ function exportCSV() {
 }
 
 // ── INIT ──────────────────────────────────────────────
-checkMidnightReset();
-renderDashboard();
+try {
+  checkMidnightReset();
+  renderDashboard();
+} catch(e) { console.error('Init error:', e); }
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').catch(function(){});
