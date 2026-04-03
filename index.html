@@ -58,7 +58,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,10,0.9
 .date-scroller-wrap::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(78,205,196,0.05) 0%,transparent 70%);pointer-events:none;}
 .month-year-label{text-align:center;font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
 .month-year-accent{color:var(--accent);}
-.date-scroller{display:flex;align-items:center;gap:8px;overflow-x:auto;padding:8px 20px;scroll-behavior:smooth;-webkit-overflow-scrolling:touch;scrollbar-width:none;cursor:grab;}
+.date-scroller{display:flex;align-items:center;gap:8px;overflow-x:auto;padding:8px 20px;-webkit-overflow-scrolling:touch;scrollbar-width:none;cursor:grab;}
 .date-scroller::-webkit-scrollbar{display:none;}
 .date-scroller.grabbing{cursor:grabbing;}
 .date-pill{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:52px;width:52px;height:64px;border-radius:16px;cursor:pointer;border:1.5px solid var(--border);background:var(--surface);transition:all 0.2s ease;flex-shrink:0;user-select:none;}
@@ -71,13 +71,22 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,10,0.9
 .date-pill.active .date-pill-num{color:#0a0a0a;font-size:26px;font-weight:800;}
 
 /* RECOVERY */
-.recovery-banner{background:rgba(245,166,35,0.07);border:1px solid rgba(245,166,35,0.22);border-radius:12px;padding:13px 15px;margin-bottom:10px;display:flex;gap:12px;align-items:flex-start;}
+.recovery-banner{background:rgba(245,166,35,0.07);border:1px solid rgba(245,166,35,0.22);border-radius:12px;padding:13px 15px;margin-bottom:10px;display:flex;gap:12px;align-items:flex-start;animation:bannerFadeIn 0.3s ease;}
+@keyframes bannerFadeIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes bannerFadeOut{from{opacity:1;max-height:80px;margin-bottom:10px;padding:13px 15px}to{opacity:0;max-height:0;margin-bottom:0;padding:0 15px}}
+.recovery-banner.fading{animation:bannerFadeOut 0.4s ease forwards;}
 .rb-icon{font-size:18px;}
 .rb-body{flex:1;}
 .rb-title{font-size:11px;font-weight:700;color:var(--warn);letter-spacing:0.5px;margin-bottom:2px;}
 .rb-msg{font-size:11px;color:var(--muted);line-height:1.5;}
 
-/* GOAL CARDS */
+.goal-card.missed-day{background:rgba(255,107,107,0.05);border-color:rgba(255,107,107,0.2);}
+.goal-card.missed-day::before{background:var(--red);}
+.goal-card.missed-day .goal-name{color:var(--muted);}
+.miss-btn{font-size:10px;font-weight:600;letter-spacing:0.3px;padding:4px 10px;border-radius:20px;cursor:pointer;border:1px solid rgba(255,107,107,0.3);background:rgba(255,107,107,0.08);color:var(--red);transition:all 0.2s;white-space:nowrap;}
+.miss-btn:hover:not([disabled]){background:rgba(255,107,107,0.18);}
+.miss-btn[disabled]{opacity:0.4;cursor:not-allowed;}
+.miss-chip{display:inline-flex;align-items:center;gap:4px;background:rgba(255,107,107,0.1);border:1px solid rgba(255,107,107,0.3);border-radius:20px;padding:2px 8px;font-size:10px;font-weight:600;color:var(--red);}
 .goal-cards{display:flex;flex-direction:column;gap:10px;margin-bottom:16px;}
 .goal-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px 20px;display:flex;align-items:center;gap:14px;transition:all 0.3s;position:relative;overflow:hidden;min-height:84px;}
 .goal-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent);transition:all 0.3s;}
@@ -581,7 +590,7 @@ function buildDateScroller() {
       (function(dateStr) {
         pill.onclick = function() {
           selectedDate = dateStr;
-          updateScrollerActive();
+          updateScrollerActive(true);
           renderDashGoalCards();
         };
       })(ds);
@@ -610,7 +619,7 @@ function buildDateScroller() {
   updateScrollerActive();
 }
 
-function updateScrollerActive() {
+function updateScrollerActive(smooth) {
   var scroller = document.getElementById('dateScroller');
   var selD = new Date(selectedDate + 'T00:00:00');
 
@@ -627,37 +636,52 @@ function updateScrollerActive() {
     if (isActive) activePill = p;
   });
 
-  // Scroll active pill into center of the visible area
+  // Scroll active pill into center — instant on init, smooth on user tap
   if (activePill) {
     var scrollerWidth = scroller.offsetWidth;
     var pillLeft      = activePill.offsetLeft;
     var pillWidth     = activePill.offsetWidth;
-    scroller.scrollLeft = pillLeft - (scrollerWidth / 2) + (pillWidth / 2);
+    var target        = pillLeft - (scrollerWidth / 2) + (pillWidth / 2);
+    if (smooth) {
+      scroller.scrollTo({ left: target, behavior: 'smooth' });
+    } else {
+      scroller.scrollLeft = target;
+    }
   }
 }
 
 // ── PAGE A: DASHBOARD ─────────────────────────────────
 function renderDashboard() {
-  buildDateScroller();
+  buildDateScroller(); // builds once; subsequent calls are no-ops due to _built flag
+  renderRecoveryBanners();
+  renderDashGoalCards();
+  renderTodos();
+}
+
+function renderRecoveryBanners() {
   var goals = load(GOALS_KEY);
   var logs  = load(LOGS_KEY);
   var bannerWrap = document.getElementById('recoveryBanners');
   bannerWrap.innerHTML = '';
-  if (selectedDate === todayStr()) {
-    goals.forEach(function(g) {
-      if (g.type === 'quit') return;
-      var missed = getMissedConsecutive(g.id, logs);
-      if (missed === 1) {
-        bannerWrap.innerHTML += '<div class="recovery-banner"><div class="rb-icon">⚠️</div><div class="rb-body"><div class="rb-title">Streak Warning — ' + esc(g.name) + '</div><div class="rb-msg">You missed yesterday. Don\'t miss today.</div></div></div>';
-      } else if (missed === 2) {
-        bannerWrap.innerHTML += '<div class="recovery-banner"><div class="rb-icon">🛟</div><div class="rb-body"><div class="rb-title">Buffer Mode — ' + esc(g.name) + '</div><div class="rb-msg">Two days missed. A small effort today saves your momentum.</div></div></div>';
-      } else if (missed >= 3) {
-        bannerWrap.innerHTML += '<div class="recovery-banner"><div class="rb-icon">🔄</div><div class="rb-body"><div class="rb-title">Re-commitment — ' + esc(g.name) + '</div><div class="rb-msg">3+ days missed. Tap complete today to restart fresh.</div></div></div>';
-      }
-    });
-  }
-  renderDashGoalCards();
-  renderTodos();
+  if (selectedDate !== todayStr()) return;
+  goals.forEach(function(g) {
+    if (g.type === 'quit') return;
+    var missed = getMissedConsecutive(g.id, logs);
+    var icon, title, msg;
+    if (missed === 1)      { icon='⚠️'; title='Streak Warning — '+esc(g.name); msg="You missed yesterday. Don't miss today."; }
+    else if (missed === 2) { icon='🛟'; title='Buffer Mode — '+esc(g.name);    msg='Two days missed. A small effort today saves your momentum.'; }
+    else if (missed >= 3)  { icon='🔄'; title='Re-commitment — '+esc(g.name); msg='3+ days missed. Tap complete today to restart fresh.'; }
+    else return;
+    var el = document.createElement('div');
+    el.className = 'recovery-banner';
+    el.innerHTML = '<div class="rb-icon">'+icon+'</div><div class="rb-body"><div class="rb-title">'+title+'</div><div class="rb-msg">'+msg+'</div></div>';
+    bannerWrap.appendChild(el);
+    // Fade out after 5 seconds
+    setTimeout(function() {
+      el.classList.add('fading');
+      setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 400);
+    }, 5000);
+  });
 }
 
 function renderDashGoalCards() {
@@ -702,9 +726,10 @@ function renderDashGoalCards() {
       if (logs[j].goalId === g.id && logs[j].date === selectedDate) { dateLog = logs[j]; break; }
     }
     var dateStatus = dateLog ? dateLog.status : null;
-    var isDone  = dateStatus === 'complete' || dateStatus === true;
-    var isCheat = dateStatus === 'cheat';
-    var missed  = getMissedConsecutive(g.id, logs);
+    var isDone    = dateStatus === 'complete' || dateStatus === true;
+    var isCheat   = dateStatus === 'cheat';
+    var isMissed  = dateStatus === 'missed';
+    var missed    = getMissedConsecutive(g.id, logs);
 
     var completedDays = 0;
     var doneSet = {};
@@ -722,23 +747,28 @@ function renderDashGoalCards() {
     var hearts = '';
     for (var i = 0; i < cheatAllowed; i++) hearts += i < cheatUsed ? '🩶' : '❤️';
 
-    var cardClass = isDone ? 'done' : isCheat ? 'cheat' : (missed >= 1 && selectedDate === todayStr() ? 'warning' : '');
+    var cardClass = isDone ? 'done' : isCheat ? 'cheat' : isMissed ? 'missed-day' : (missed >= 1 && selectedDate === todayStr() ? 'warning' : '');
     var toggleIcon = isDone ? '✓' : (isCheat ? '◑' : '');
-    var cheatDisabled = cheatLeft <= 0 || isDone || isCheat;
+    var cheatDisabled = cheatLeft <= 0 || isDone || isCheat || isMissed;
+    var missDisabled  = isDone || isCheat || isMissed;
 
     html += '<div class="goal-card ' + cardClass + '" id="card-' + g.id + '">' +
-      '<button class="goal-toggle" onclick="toggleGoal(\'' + g.id + '\')">' + toggleIcon + '</button>' +
+      '<button class="goal-toggle" onclick="toggleGoal(\'' + g.id + '\')" ' + (isMissed ? 'disabled style="opacity:0.35;cursor:not-allowed"' : '') + '>' + toggleIcon + '</button>' +
       '<div class="goal-info">' +
         '<div class="goal-name">' + esc(g.name) + '</div>' +
         '<div class="goal-meta">' +
           (streak > 0 ? '<span class="streak-chip">' + streak + 'd streak</span>' : '') +
-          (missed >= 1 && !isDone && !isCheat && selectedDate === todayStr() ? '<span class="warning-chip">' + missed + ' missed</span>' : '') +
+          (isMissed ? '<span class="miss-chip">✕ Missed</span>' : '') +
+          (missed >= 1 && !isDone && !isCheat && !isMissed && selectedDate === todayStr() ? '<span class="warning-chip">' + missed + ' missed</span>' : '') +
         '</div>' +
         (cheatAllowed > 0 ? '<div class="cheat-bank">' + hearts + '</div>' : '') +
       '</div>' +
       '<div class="goal-right">' +
         '<div class="progress-frac">' + completedDays + '<span class="denom">/' + g.totalDays + '</span></div>' +
-        (cheatAllowed > 0 ? '<button class="cheat-btn" onclick="useCheatDay(\'' + g.id + '\')" ' + (cheatDisabled ? 'disabled' : '') + '>' + (isCheat ? '✓ Safe Miss' : '🛡 Safe Miss') + '</button>' : '') +
+        '<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">' +
+          (cheatAllowed > 0 ? '<button class="cheat-btn" onclick="useCheatDay(\'' + g.id + '\')" ' + (cheatDisabled ? 'disabled' : '') + '>' + (isCheat ? '✓ Safe Miss' : '🛡 Safe Miss') + '</button>' : '') +
+          '<button class="miss-btn" onclick="markMissed(\'' + g.id + '\')" ' + (missDisabled ? 'disabled' : '') + '>' + (isMissed ? '✕ Missed' : '✕ Miss') + '</button>' +
+        '</div>' +
       '</div>' +
     '</div>';
   });
@@ -790,6 +820,17 @@ function useCheatDay(goalId) {
   else logs.push({ goalId: goalId, date: selectedDate, status: 'cheat' });
   save(LOGS_KEY, logs);
   toast('Safe Miss used 🛡');
+  renderDashGoalCards();
+}
+
+function markMissed(goalId) {
+  var logs = load(LOGS_KEY);
+  var idx = -1;
+  for (var i = 0; i < logs.length; i++) { if (logs[i].goalId === goalId && logs[i].date === selectedDate) { idx = i; break; } }
+  if (idx !== -1) logs[idx].status = 'missed';
+  else logs.push({ goalId: goalId, date: selectedDate, status: 'missed' });
+  save(LOGS_KEY, logs);
+  toast('Marked as missed.');
   renderDashGoalCards();
 }
 
