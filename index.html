@@ -30,17 +30,20 @@
 body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100dvh;overflow-x:hidden;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);}
 
 /* NAV */
-nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,10,0.96);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;height:52px;}
-.nav-brand{font-family:'Sora',sans-serif;font-size:17px;font-weight:700;letter-spacing:0.5px;color:var(--accent);margin-right:auto;display:flex;align-items:center;gap:8px;}
-.nav-brand-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:pulse 2s ease-in-out infinite;}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,10,0.97);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);}
+.nav-header{display:flex;align-items:center;justify-content:center;padding:14px 20px 10px;position:relative;}
+.nav-brand{font-family:'Sora',sans-serif;font-size:26px;font-weight:700;letter-spacing:-0.5px;color:var(--accent);display:flex;align-items:center;gap:10px;}
+.nav-brand-dot{width:9px;height:9px;border-radius:50%;background:var(--accent);animation:pulse 2s ease-in-out infinite;flex-shrink:0;}
+.nav-brand-sub{font-size:10px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--muted);display:block;margin-top:1px;font-family:'Inter',sans-serif;}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}
-.nav-tabs{display:flex;}
-.nav-tab{padding:0 14px;height:52px;display:flex;align-items:center;font-size:11px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;color:var(--muted);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;transition:all 0.2s;position:relative;top:1px;}
+.nav-tabs{display:flex;border-top:1px solid var(--border);}
+.nav-tab{flex:1;padding:0 8px;height:40px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:var(--muted);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;transition:all 0.2s;position:relative;top:1px;gap:5px;}
 .nav-tab:hover{color:var(--text);}
 .nav-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.nav-tab-icon{font-size:13px;}
 
 /* PAGES */
-.page{display:none;padding:68px 0 80px;min-height:100dvh;}
+.page{display:none;padding:96px 0 80px;min-height:100dvh;}
 .page.active{display:block;}
 .container{max-width:780px;margin:0 auto;padding:0 20px;}
 
@@ -51,18 +54,21 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,10,0.9
 .empty-state strong{display:block;font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;color:var(--dim);}
 
 /* DATE SCROLLER */
-.date-scroller-wrap{padding:20px 0 16px;border-bottom:1px solid var(--border);margin-bottom:20px;position:relative;overflow:hidden;}
+.date-scroller-wrap{padding:16px 0 14px;border-bottom:1px solid var(--border);margin-bottom:20px;position:relative;}
 .date-scroller-wrap::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(78,205,196,0.05) 0%,transparent 70%);pointer-events:none;}
-.month-year-label{text-align:center;font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:14px;}
+.month-year-label{text-align:center;font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
 .month-year-accent{color:var(--accent);}
-.date-scroller{display:flex;justify-content:center;align-items:center;gap:8px;padding:0 12px;}
-.date-pill{display:flex;flex-direction:column;align-items:center;justify-content:center;width:52px;height:64px;border-radius:26px;cursor:pointer;border:1.5px solid var(--border);background:var(--surface);transition:all 0.25s;flex-shrink:0;}
+.date-scroller{display:flex;align-items:center;gap:8px;overflow-x:auto;padding:8px 20px;scroll-behavior:smooth;-webkit-overflow-scrolling:touch;scrollbar-width:none;cursor:grab;}
+.date-scroller::-webkit-scrollbar{display:none;}
+.date-scroller.grabbing{cursor:grabbing;}
+.date-pill{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:52px;width:52px;height:64px;border-radius:16px;cursor:pointer;border:1.5px solid var(--border);background:var(--surface);transition:all 0.2s ease;flex-shrink:0;user-select:none;}
 .date-pill:hover{border-color:var(--accent-border);background:var(--accent-dim);}
-.date-pill.active{background:var(--accent);border-color:var(--accent);box-shadow:0 0 18px rgba(78,205,196,0.35);}
+.date-pill.active{background:var(--accent);border-color:var(--accent);box-shadow:0 0 20px rgba(78,205,196,0.35);min-width:62px;width:62px;height:76px;border-radius:20px;}
+.date-pill.today-marker{border-color:rgba(78,205,196,0.45);}
 .date-pill-day{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;}
-.date-pill.active .date-pill-day{color:rgba(10,10,10,0.7);}
-.date-pill-num{font-family:'Sora',sans-serif;font-size:22px;font-weight:700;color:var(--text);line-height:1;letter-spacing:-1px;}
-.date-pill.active .date-pill-num{color:#0a0a0a;}
+.date-pill.active .date-pill-day{color:rgba(10,10,10,0.65);}
+.date-pill-num{font-family:'Sora',sans-serif;font-size:20px;font-weight:700;color:var(--text);line-height:1;letter-spacing:-0.5px;}
+.date-pill.active .date-pill-num{color:#0a0a0a;font-size:26px;font-weight:800;}
 
 /* RECOVERY */
 .recovery-banner{background:rgba(245,166,35,0.07);border:1px solid rgba(245,166,35,0.22);border-radius:12px;padding:13px 15px;margin-bottom:10px;display:flex;gap:12px;align-items:flex-start;}
@@ -275,20 +281,20 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,10,0.9
   .nav-tab{padding:0 10px;font-size:10px;}
   .weight-top{flex-direction:column;align-items:flex-start;}
   .weight-trend{text-align:left;}
-  .date-pill{width:48px;height:60px;}
-  .date-pill-num{font-size:20px;}
 }
 </style>
 </head>
 <body>
 
 <nav>
-  <div class="nav-brand"><div class="nav-brand-dot"></div>Consistency</div>
+  <div class="nav-header">
+    <div class="nav-brand"><div class="nav-brand-dot"></div><div><span>Consistency</span><span class="nav-brand-sub">Hub</span></div></div>
+  </div>
   <div class="nav-tabs">
-    <button class="nav-tab active" onclick="showPage('dashboard')">Today</button>
-    <button class="nav-tab" onclick="showPage('goals')">Goals</button>
-    <button class="nav-tab" onclick="showPage('insights')">Insights</button>
-    <button class="nav-tab" onclick="showPage('weight')">Weight</button>
+    <button class="nav-tab active" onclick="showPage('dashboard')"><span class="nav-tab-icon">📅</span>Today</button>
+    <button class="nav-tab" onclick="showPage('goals')"><span class="nav-tab-icon">🎯</span>Goals</button>
+    <button class="nav-tab" onclick="showPage('insights')"><span class="nav-tab-icon">📊</span>Insights</button>
+    <button class="nav-tab" onclick="showPage('weight')"><span class="nav-tab-icon">⚖️</span>Weight</button>
   </div>
 </nav>
 
@@ -550,26 +556,83 @@ function getMissedConsecutive(goalId, logs) {
 // ── DATE SCROLLER ─────────────────────────────────────
 var MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 var DAY_NAMES   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+var SCROLLER_DAYS_PAST   = 60;
+var SCROLLER_DAYS_FUTURE = 30;
 
 function buildDateScroller() {
+  var scroller = document.getElementById('dateScroller');
+
+  // Build pills only once; after that just update active state + label
+  if (!scroller._built) {
+    scroller.innerHTML = '';
+    var base = new Date(); base.setHours(0,0,0,0);
+    base.setDate(base.getDate() - SCROLLER_DAYS_PAST);
+
+    var total = SCROLLER_DAYS_PAST + 1 + SCROLLER_DAYS_FUTURE;
+    for (var i = 0; i < total; i++) {
+      var d = new Date(base); d.setDate(base.getDate() + i);
+      var ds = d.toISOString().slice(0, 10);
+      var pill = document.createElement('div');
+      pill.className = 'date-pill';
+      if (ds === todayStr()) pill.classList.add('today-marker');
+      pill.dataset.date = ds;
+      pill.innerHTML = '<div class="date-pill-day">' + DAY_NAMES[d.getDay()] + '</div>'
+                     + '<div class="date-pill-num">' + d.getDate() + '</div>';
+      (function(dateStr) {
+        pill.onclick = function() {
+          selectedDate = dateStr;
+          updateScrollerActive();
+          renderDashGoalCards();
+        };
+      })(ds);
+      scroller.appendChild(pill);
+    }
+
+    // Mouse drag-to-scroll
+    var isDown = false, startX, scrollLeft;
+    scroller.addEventListener('mousedown', function(e) {
+      isDown = true; scroller.classList.add('grabbing');
+      startX = e.pageX - scroller.offsetLeft;
+      scrollLeft = scroller.scrollLeft;
+    });
+    scroller.addEventListener('mouseleave', function() { isDown = false; scroller.classList.remove('grabbing'); });
+    scroller.addEventListener('mouseup',    function() { isDown = false; scroller.classList.remove('grabbing'); });
+    scroller.addEventListener('mousemove',  function(e) {
+      if (!isDown) return;
+      e.preventDefault();
+      var x = e.pageX - scroller.offsetLeft;
+      scroller.scrollLeft = scrollLeft - (x - startX);
+    });
+
+    scroller._built = true;
+  }
+
+  updateScrollerActive();
+}
+
+function updateScrollerActive() {
+  var scroller = document.getElementById('dateScroller');
   var selD = new Date(selectedDate + 'T00:00:00');
+
+  // Update month/year label
   document.getElementById('monthYearLabel').innerHTML =
     MONTH_NAMES[selD.getMonth()] + ' <span class="month-year-accent">' + selD.getFullYear() + '</span>';
 
-  var scroller = document.getElementById('dateScroller');
-  scroller.innerHTML = '';
-  for (var offset = -2; offset <= 2; offset++) {
-    var d = new Date(selD); d.setDate(d.getDate() + offset);
-    var ds = d.toISOString().slice(0,10);
-    var isCenter = offset === 0;
-    var pill = document.createElement('div');
-    pill.className = 'date-pill' + (isCenter ? ' active' : '');
-    pill.innerHTML = '<div class="date-pill-day">' + DAY_NAMES[d.getDay()] + '</div><div class="date-pill-num">' + d.getDate() + '</div>';
-    if (ds === todayStr() && !isCenter) pill.style.borderColor = 'rgba(78,205,196,0.4)';
-    (function(dateStr){
-      pill.onclick = function(){ selectedDate = dateStr; buildDateScroller(); renderDashGoalCards(); };
-    })(ds);
-    scroller.appendChild(pill);
+  // Update active pill
+  var pills = scroller.querySelectorAll('.date-pill');
+  var activePill = null;
+  pills.forEach(function(p) {
+    var isActive = p.dataset.date === selectedDate;
+    p.classList.toggle('active', isActive);
+    if (isActive) activePill = p;
+  });
+
+  // Scroll active pill into center of the visible area
+  if (activePill) {
+    var scrollerWidth = scroller.offsetWidth;
+    var pillLeft      = activePill.offsetLeft;
+    var pillWidth     = activePill.offsetWidth;
+    scroller.scrollLeft = pillLeft - (scrollerWidth / 2) + (pillWidth / 2);
   }
 }
 
