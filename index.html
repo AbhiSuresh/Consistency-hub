@@ -12,6 +12,8 @@
 <meta name="theme-color" content="#0a0a0a"/>
 <meta name="description" content="Track your daily habits, streaks, and weight — stay consistent."/>
 <link rel="manifest" href="manifest.json"/>
+<link rel="icon" href="icon-512.png" type="image/png"/>
+<link rel="apple-touch-icon" href="icon-512.png"/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -35,6 +37,9 @@
   --red-dim: rgba(255,107,107,0.12);
   --green: #4ECDC4;
   --warn: #f5a623;
+  --quit-color: #ff6b6b;
+  --quit-dim: rgba(255,107,107,0.1);
+  --quit-border: rgba(255,107,107,0.3);
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -104,55 +109,56 @@ nav {
   text-transform: uppercase; margin-bottom: 6px; color: var(--dim);
 }
 
-/* PAGE A - DASHBOARD */
-.date-hero {
-  text-align: center; padding: 32px 0 28px;
-  border-bottom: 1px solid var(--border); margin-bottom: 24px;
-  position: relative; overflow: hidden;
+/* ── DATE SCROLLER ── */
+.date-scroller-wrap {
+  padding: 20px 0 16px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
 }
-.date-hero::before {
+.date-scroller-wrap::before {
   content: ''; position: absolute; inset: 0;
-  background: radial-gradient(ellipse at 50% 0%, rgba(78,205,196,0.06) 0%, transparent 70%);
+  background: radial-gradient(ellipse at 50% 0%, rgba(78,205,196,0.05) 0%, transparent 70%);
   pointer-events: none;
 }
-.date-day-num {
-  font-family: 'Sora', sans-serif;
-  font-size: clamp(90px, 18vw, 150px);
-  font-weight: 700; line-height: 0.85;
-  color: var(--accent); letter-spacing: -6px; display: block;
+.month-year-label {
+  text-align: center;
+  font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 14px;
 }
-.date-sub {
-  font-size: 13px; font-weight: 500;
-  letter-spacing: 1.5px; text-transform: uppercase;
-  color: var(--muted); margin-top: 10px;
-}
-.date-year { color: var(--accent); opacity: 0.6; }
+.month-year-label span { color: var(--accent); }
 
-/* Energy slider */
-.energy-bar-wrap {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 12px; padding: 13px 16px; margin-bottom: 16px;
-  display: flex; align-items: center; gap: 14px;
+.date-scroller {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
 }
-.energy-label {
-  font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
-  text-transform: uppercase; color: var(--muted); white-space: nowrap;
+
+.date-pill {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  width: 52px; height: 64px; border-radius: 26px;
+  cursor: pointer; border: 1.5px solid var(--border);
+  background: var(--surface); transition: all 0.25s;
+  flex-shrink: 0;
 }
-.energy-slider {
-  flex: 1; -webkit-appearance: none; appearance: none;
-  height: 4px; border-radius: 2px; outline: none; cursor: pointer;
-  background: linear-gradient(to right, var(--accent) 0%, var(--accent) 50%, var(--dim) 50%, var(--dim) 100%);
+.date-pill:hover { border-color: var(--accent-border); background: var(--accent-dim); }
+.date-pill.active {
+  background: var(--accent); border-color: var(--accent);
+  box-shadow: 0 0 18px rgba(78,205,196,0.35);
 }
-.energy-slider::-webkit-slider-thumb {
-  -webkit-appearance: none; width: 18px; height: 18px;
-  border-radius: 50%; background: var(--accent);
-  border: 2px solid var(--bg); cursor: pointer;
-  box-shadow: 0 0 6px rgba(78,205,196,0.4);
+.date-pill-day {
+  font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 4px;
 }
-.energy-val {
-  font-family: 'Sora', sans-serif; font-size: 18px; font-weight: 700;
-  color: var(--accent); min-width: 24px; text-align: right;
+.date-pill.active .date-pill-day { color: rgba(10,10,10,0.7); }
+.date-pill-num {
+  font-family: 'Sora', sans-serif; font-size: 22px; font-weight: 700;
+  color: var(--text); line-height: 1; letter-spacing: -1px;
 }
+.date-pill.active .date-pill-num { color: #0a0a0a; }
 
 /* Recovery banners */
 .recovery-banner {
@@ -167,12 +173,13 @@ nav {
 .rb-msg { font-size: 11px; color: var(--muted); line-height: 1.5; }
 
 /* Goal cards */
-.goal-cards { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+.goal-cards { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
 .goal-card {
   background: var(--surface); border: 1px solid var(--border);
-  border-radius: 16px; padding: 15px 17px;
-  display: flex; align-items: center; gap: 13px;
+  border-radius: 16px; padding: 18px 20px;
+  display: flex; align-items: center; gap: 14px;
   transition: all 0.3s; position: relative; overflow: hidden;
+  min-height: 84px;
 }
 .goal-card::before {
   content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
@@ -183,14 +190,16 @@ nav {
 .goal-card.cheat { background: var(--cheat-bg); border-color: var(--cheat-border); }
 .goal-card.cheat::before { background: var(--cheat-color); }
 .goal-card.warning::before { background: var(--warn); }
+.goal-card.quit-type::before { background: var(--quit-color); }
+.goal-card.quit-type { border-color: rgba(255,107,107,0.2); }
 
 /* Toggle button */
 .goal-toggle {
-  width: 38px; height: 38px; min-width: 38px;
+  width: 42px; height: 42px; min-width: 42px;
   border: 2px solid var(--border); border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   cursor: pointer; transition: all 0.2s;
-  background: none; color: transparent; font-size: 15px;
+  background: none; color: transparent; font-size: 16px;
 }
 .goal-toggle:hover { border-color: var(--accent); background: var(--accent-dim); }
 .goal-card.done .goal-toggle { background: var(--done-border); border-color: var(--done-border); color: #fff; }
@@ -198,8 +207,8 @@ nav {
 
 .goal-info { flex: 1; min-width: 0; }
 .goal-name {
-  font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 600;
-  margin-bottom: 5px; transition: all 0.3s;
+  font-family: 'Sora', sans-serif; font-size: 15px; font-weight: 600;
+  margin-bottom: 6px; transition: all 0.3s;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .goal-card.done .goal-name { text-decoration: line-through; color: var(--muted); }
@@ -219,17 +228,41 @@ nav {
   border-radius: 20px; padding: 2px 8px;
   font-size: 10px; font-weight: 600; color: var(--warn);
 }
+.quit-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: var(--quit-dim); border: 1px solid var(--quit-border);
+  border-radius: 20px; padding: 2px 8px;
+  font-size: 10px; font-weight: 600; color: var(--quit-color);
+}
 
 .cheat-bank { display: flex; gap: 3px; font-size: 13px; margin-top: 6px; }
 
-.goal-right { display: flex; flex-direction: column; align-items: flex-end; gap: 7px; }
+.goal-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
 .progress-frac {
-  font-family: 'Sora', sans-serif; font-size: 26px; font-weight: 700;
+  font-family: 'Sora', sans-serif; font-size: 28px; font-weight: 700;
   line-height: 1; color: var(--accent); letter-spacing: -1px;
 }
-.progress-frac .denom { color: var(--muted); font-size: 16px; font-weight: 400; }
+.progress-frac .denom { color: var(--muted); font-size: 17px; font-weight: 400; }
 .goal-card.done .progress-frac { color: var(--muted); }
 .goal-card.cheat .progress-frac { color: var(--cheat-color); }
+
+/* Quit counter */
+.quit-counter-wrap {
+  display: flex; flex-direction: column; align-items: flex-end; gap: 4px;
+}
+.quit-counter-frac {
+  font-family: 'Sora', sans-serif; font-size: 26px; font-weight: 700;
+  line-height: 1; letter-spacing: -1px; color: var(--quit-color);
+}
+.quit-counter-label { font-size: 9px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+.quit-add-btn {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.3px;
+  padding: 5px 12px; border-radius: 20px; cursor: pointer;
+  border: 1px solid var(--quit-border);
+  background: var(--quit-dim); color: var(--quit-color);
+  transition: all 0.2s;
+}
+.quit-add-btn:hover { background: rgba(255,107,107,0.2); }
 
 .cheat-btn {
   font-size: 10px; font-weight: 600; letter-spacing: 0.3px;
@@ -240,6 +273,81 @@ nav {
 }
 .cheat-btn:hover:not([disabled]) { background: rgba(122,92,0,0.3); }
 .cheat-btn[disabled] { opacity: 0.4; cursor: not-allowed; }
+
+/* TODO CARD */
+.todo-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; padding: 18px 20px; margin-bottom: 16px;
+  min-height: 84px;
+}
+.todo-card-header {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;
+}
+.todo-card-title {
+  font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 600;
+  color: var(--accent); display: flex; align-items: center; gap: 8px;
+}
+.todo-card-title::before { content: '✓'; font-size: 12px; }
+.todo-add-btn {
+  width: 30px; height: 30px; border-radius: 50%;
+  border: 1.5px solid var(--accent-border); background: var(--accent-dim);
+  color: var(--accent); font-size: 18px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.2s;
+}
+.todo-add-btn:hover { background: var(--accent); color: #0a0a0a; }
+
+.todo-list { display: flex; flex-direction: column; gap: 8px; }
+.todo-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; border-radius: 10px;
+  background: var(--surface2); border: 1px solid var(--border);
+  transition: all 0.2s; position: relative; overflow: hidden;
+  touch-action: pan-y;
+  transform: translateX(0);
+  transition: transform 0.25s ease, background 0.2s, opacity 0.2s;
+}
+.todo-item.swiped {
+  transform: translateX(-80px);
+}
+.todo-item.completed { opacity: 0.5; }
+.todo-item.completed .todo-text { text-decoration: line-through; color: var(--muted); }
+.todo-checkbox {
+  width: 22px; height: 22px; min-width: 22px; border-radius: 50%;
+  border: 2px solid var(--border); background: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; color: transparent; transition: all 0.2s; flex-shrink: 0;
+}
+.todo-checkbox:hover { border-color: var(--accent); background: var(--accent-dim); }
+.todo-item.completed .todo-checkbox { background: var(--accent); border-color: var(--accent); color: #0a0a0a; }
+.todo-text { flex: 1; font-size: 13px; color: var(--text); word-break: break-word; }
+.todo-delete-btn {
+  position: absolute; right: 0; top: 0; bottom: 0;
+  width: 70px; background: var(--red); display: flex;
+  align-items: center; justify-content: center;
+  color: #fff; font-size: 12px; font-weight: 700;
+  cursor: pointer; opacity: 0;
+  transition: opacity 0.2s;
+}
+.todo-item.swiped .todo-delete-btn { opacity: 1; }
+
+.todo-input-wrap {
+  display: flex; gap: 8px; margin-top: 12px;
+}
+.todo-input {
+  flex: 1; background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 12px; color: var(--text);
+  font-size: 13px; font-family: 'Inter', sans-serif; outline: none;
+  transition: border-color 0.2s;
+}
+.todo-input:focus { border-color: var(--accent); }
+.todo-input::placeholder { color: var(--dim); }
+.todo-submit-btn {
+  padding: 10px 16px; background: var(--accent); color: #0a0a0a;
+  border: none; border-radius: 8px; font-weight: 700; font-size: 12px;
+  cursor: pointer; transition: all 0.2s;
+}
+.todo-submit-btn:hover { filter: brightness(1.1); }
 
 /* PAGE B - GOAL MANAGEMENT */
 .page-header { padding: 28px 0 24px; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
@@ -257,6 +365,31 @@ nav {
   font-family: 'Sora', sans-serif; font-size: 18px; font-weight: 700;
   letter-spacing: -0.5px; margin-bottom: 18px; color: var(--accent);
 }
+
+/* Goal type toggle */
+.goal-type-toggle {
+  display: flex; gap: 8px; margin-bottom: 16px;
+}
+.type-btn {
+  flex: 1; padding: 12px 8px; border-radius: 12px;
+  border: 1.5px solid var(--border); background: var(--surface2);
+  cursor: pointer; transition: all 0.2s; text-align: center;
+}
+.type-btn-label {
+  font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.type-btn-desc { font-size: 10px; color: var(--muted); line-height: 1.4; }
+.type-btn.build-active {
+  border-color: var(--accent); background: var(--accent-dim);
+}
+.type-btn.build-active .type-btn-label { color: var(--accent); }
+.type-btn.quit-active {
+  border-color: var(--quit-color); background: var(--quit-dim);
+}
+.type-btn.quit-active .type-btn-label { color: var(--quit-color); }
+.type-btn:not(.build-active):not(.quit-active) .type-btn-label { color: var(--muted); }
+
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; margin-bottom: 13px; }
 .form-grid.full { grid-template-columns: 1fr; }
 .field { display: flex; flex-direction: column; gap: 6px; }
@@ -275,6 +408,25 @@ nav {
 .field input::placeholder, .field textarea::placeholder { color: var(--dim); }
 .form-actions { display: flex; gap: 10px; margin-top: 6px; flex-wrap: wrap; }
 
+/* Significance auto-generated pill */
+.sig-generating {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--accent-dim); border: 1px solid var(--accent-border);
+  border-radius: 8px; padding: 10px 13px; margin-bottom: 13px;
+  font-size: 12px; color: var(--accent); font-style: italic;
+}
+.sig-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulse 1s ease-in-out infinite; }
+.sig-generated {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 12px 13px; margin-bottom: 13px;
+  font-size: 12px; color: var(--muted); line-height: 1.6;
+  position: relative;
+}
+.sig-generated-label {
+  font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 5px;
+}
+
 /* Buttons */
 .btn {
   font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700;
@@ -292,22 +444,41 @@ nav {
 .btn-export { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
 .btn-export:hover { border-color: var(--accent); color: var(--accent); }
 
-.goals-table { width: 100%; border-collapse: collapse; }
-.goals-table th {
-  font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
-  color: var(--muted); text-align: left; padding: 8px 11px;
-  border-bottom: 1px solid var(--border);
+/* Active Goals List in Goals page */
+.active-goal-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; padding: 18px 20px; margin-bottom: 12px;
+  position: relative; overflow: hidden;
 }
-.goals-table td {
-  padding: 12px 11px; border-bottom: 1px solid var(--border);
-  font-size: 13px; vertical-align: middle;
+.active-goal-card::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent);
 }
-.goals-table tr:last-child td { border-bottom: none; }
-.goals-table tr:hover td { background: var(--surface2); }
-.badge {
-  font-family: 'JetBrains Mono', monospace; font-size: 10px;
-  padding: 3px 7px; border-radius: 4px;
-  background: var(--surface2); color: var(--muted); border: 1px solid var(--border);
+.active-goal-card.quit-type::before { background: var(--quit-color); }
+.agc-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; }
+.agc-name {
+  font-family: 'Sora', sans-serif; font-size: 16px; font-weight: 700;
+  letter-spacing: -0.5px; color: var(--text);
+}
+.agc-type-badge {
+  font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+  padding: 3px 8px; border-radius: 20px; margin-left: 8px;
+}
+.agc-type-badge.build { background: var(--accent-dim); color: var(--accent); border: 1px solid var(--accent-border); }
+.agc-type-badge.quit { background: var(--quit-dim); color: var(--quit-color); border: 1px solid var(--quit-border); }
+.agc-actions { display: flex; gap: 6px; }
+.agc-progress { margin-bottom: 8px; }
+.agc-progress-bar-wrap {
+  height: 4px; background: var(--dim); border-radius: 2px; overflow: hidden; margin-top: 8px;
+}
+.agc-progress-bar { height: 100%; border-radius: 2px; background: var(--accent); transition: width 0.3s; }
+.agc-type-quit .agc-progress-bar { background: var(--quit-color); }
+.agc-stats { display: flex; gap: 12px; flex-wrap: wrap; }
+.agc-stat { font-size: 11px; color: var(--muted); }
+.agc-stat strong { color: var(--text); }
+.agc-sig {
+  font-size: 11px; color: var(--muted); font-style: italic;
+  margin-top: 8px; line-height: 1.5; padding-top: 8px;
+  border-top: 1px solid var(--border);
 }
 
 /* PAGE C - INSIGHTS */
@@ -315,8 +486,9 @@ nav {
 .metric-card {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: 14px; padding: 18px 14px; text-align: center;
-  position: relative; overflow: hidden;
+  position: relative; overflow: hidden; cursor: pointer; transition: all 0.2s;
 }
+.metric-card:hover { border-color: var(--accent-border); transform: translateY(-2px); }
 .metric-card::after {
   content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
   background: var(--accent); opacity: 0.4;
@@ -329,6 +501,19 @@ nav {
   font-size: 10px; font-weight: 600; letter-spacing: 1px;
   text-transform: uppercase; color: var(--muted); margin-top: 4px;
 }
+
+/* Insight filter tabs */
+.insight-filter-tabs {
+  display: flex; gap: 6px; margin-bottom: 20px; flex-wrap: wrap;
+}
+.insight-filter-tab {
+  padding: 6px 14px; border-radius: 20px;
+  font-size: 11px; font-weight: 600; letter-spacing: 0.5px;
+  cursor: pointer; border: 1px solid var(--border);
+  background: var(--surface); color: var(--muted); transition: all 0.2s;
+}
+.insight-filter-tab:hover { color: var(--text); border-color: var(--muted); }
+.insight-filter-tab.active { background: var(--accent); color: #0a0a0a; border-color: var(--accent); }
 
 /* Quote */
 .quote-block {
@@ -346,10 +531,13 @@ nav {
 .insight-card {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: 16px; padding: 20px; position: relative; overflow: hidden; margin-bottom: 13px;
+  transition: all 0.2s;
 }
+.insight-card:hover { border-color: var(--accent-border); }
 .insight-card::before {
   content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent);
 }
+.insight-card.quit-type::before { background: var(--quit-color); }
 .insight-goal-name {
   font-family: 'Sora', sans-serif; font-size: 16px; font-weight: 700;
   letter-spacing: -0.5px; color: var(--text); margin-bottom: 6px;
@@ -360,7 +548,9 @@ nav {
 .streak-box {
   background: var(--surface2); border: 1px solid var(--border);
   border-radius: 10px; padding: 11px 14px; flex: 1; text-align: center;
+  cursor: pointer; transition: all 0.15s;
 }
+.streak-box:hover { border-color: var(--accent-border); }
 .streak-box-val {
   font-family: 'Sora', sans-serif; font-size: 26px; font-weight: 700;
   color: var(--accent); letter-spacing: -1px; line-height: 1;
@@ -373,7 +563,8 @@ nav {
 }
 .heatmap-title { font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 10px; letter-spacing: 1px; text-transform: uppercase; }
 .heatmap-grid { display: flex; flex-wrap: wrap; gap: 3px; }
-.hm-cell { width: 13px; height: 13px; border-radius: 2px; background: var(--dim); }
+.hm-cell { width: 13px; height: 13px; border-radius: 2px; background: var(--dim); cursor: pointer; transition: transform 0.1s; }
+.hm-cell:hover { transform: scale(1.3); }
 .hm-cell.success { background: var(--accent); }
 .hm-cell.cheat { background: var(--cheat-color); }
 .hm-cell.missed { background: var(--red); opacity: 0.55; }
@@ -386,11 +577,32 @@ nav {
 .insight-stat { font-size: 11px; font-weight: 500; color: var(--muted); }
 .insight-stat strong { color: var(--text); font-weight: 600; }
 
+/* Progress ring */
+.progress-ring-wrap {
+  display: flex; flex-direction: column; align-items: center; margin-bottom: 14px;
+  padding: 12px; background: var(--surface2); border-radius: 12px;
+}
+.progress-ring-label { font-size: 10px; color: var(--muted); margin-top: 6px; letter-spacing: 1px; text-transform: uppercase; }
+
 /* PAGE D - WEIGHT */
 .weight-input-card {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: 16px; padding: 24px; margin-bottom: 24px;
 }
+.weight-date-selector {
+  display: flex; gap: 8px; margin-bottom: 16px; align-items: center;
+}
+.weight-date-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--muted); white-space: nowrap;
+}
+.weight-date-input {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 8px 12px; color: var(--text);
+  font-family: 'Inter', sans-serif; font-size: 13px; outline: none;
+  transition: border-color 0.2s; flex: 1;
+}
+.weight-date-input:focus { border-color: var(--accent); }
 .weight-top { display: flex; align-items: flex-end; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
 .weight-big-input {
   font-family: 'Sora', sans-serif; font-size: 60px; font-weight: 700;
@@ -444,12 +656,26 @@ nav {
 .toast.warn { border-left-color: var(--warn); }
 @keyframes slideIn { from{transform:translateX(110%);opacity:0} to{transform:translateX(0);opacity:1} }
 
+/* Insight tooltip */
+.hm-tooltip {
+  position: fixed; background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 6px 10px; font-size: 11px; color: var(--text);
+  pointer-events: none; z-index: 200; display: none;
+  white-space: nowrap; box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+
+/* Animated streak fire */
+@keyframes flamePulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.3)} }
+.flame-anim { display: inline-block; animation: flamePulse 0.8s ease-in-out infinite; }
+
 @media (max-width: 600px) {
   .metrics-row { grid-template-columns: 1fr 1fr; }
   .form-grid { grid-template-columns: 1fr; }
   .nav-tab { padding: 0 10px; font-size: 10px; }
   .weight-top { flex-direction: column; align-items: flex-start; }
   .weight-trend { text-align: left; }
+  .date-pill { width: 48px; height: 60px; }
+  .date-pill-num { font-size: 20px; }
 }
 </style>
 </head>
@@ -469,22 +695,34 @@ nav {
 </nav>
 
 <div class="toast-wrap" id="toastWrap"></div>
+<div class="hm-tooltip" id="hmTooltip"></div>
 
 <!-- PAGE A: DASHBOARD -->
 <div class="page active" id="page-dashboard">
   <div class="container">
-    <div class="date-hero">
-      <span class="date-day-num" id="dateNum">—</span>
-      <div class="date-sub" id="dateSub">—</div>
+    <!-- Date scroller with 5-day view -->
+    <div class="date-scroller-wrap">
+      <div class="month-year-label" id="monthYearLabel"></div>
+      <div class="date-scroller" id="dateScroller"></div>
     </div>
-    <div class="energy-bar-wrap">
-      <span class="energy-label">Energy</span>
-      <input type="range" class="energy-slider" id="energySlider" min="1" max="10" value="5" oninput="updateEnergy(this.value)">
-      <span class="energy-val" id="energyVal">5</span>
-    </div>
+
     <div id="recoveryBanners"></div>
-    <div class="section-label">Today's Goals</div>
+    <div class="section-label">Goals</div>
     <div class="goal-cards" id="dashGoalCards"></div>
+
+    <!-- Todo List Card -->
+    <div class="todo-card">
+      <div class="todo-card-header">
+        <div class="todo-card-title">To-Do List</div>
+        <button class="todo-add-btn" id="todoAddBtn" onclick="toggleTodoInput()">+</button>
+      </div>
+      <div class="todo-list" id="todoList"></div>
+      <div class="todo-input-wrap" id="todoInputWrap" style="display:none;">
+        <input type="text" class="todo-input" id="todoInput" placeholder="Add a new task…" onkeydown="if(event.key==='Enter')addTodo()"/>
+        <button class="todo-submit-btn" onclick="addTodo()">Add</button>
+      </div>
+    </div>
+
     <div style="display:flex;justify-content:flex-end;margin-top:12px;">
       <button class="btn btn-export btn-sm" onclick="exportCSV()">⬇ Export CSV</button>
     </div>
@@ -496,33 +734,51 @@ nav {
   <div class="container">
     <div class="page-header">
       <h1>Goal Management</h1>
-      <p>Define what you're building, and why it matters.</p>
+      <p>Define what you're building or quitting.</p>
     </div>
     <div class="form-card">
       <div class="form-title" id="formTitle">New Goal</div>
       <input type="hidden" id="editGoalId"/>
+
+      <!-- Goal type toggle -->
+      <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Goal Type</div>
+      <div class="goal-type-toggle">
+        <div class="type-btn build-active" id="typeBtnBuild" onclick="selectGoalType('build')">
+          <div class="type-btn-label">🌱 Build</div>
+          <div class="type-btn-desc">Build a positive habit you want to grow</div>
+        </div>
+        <div class="type-btn" id="typeBtnQuit" onclick="selectGoalType('quit')">
+          <div class="type-btn-label">🚫 Quit</div>
+          <div class="type-btn-desc">Reduce or eliminate a bad habit</div>
+        </div>
+      </div>
+      <input type="hidden" id="goalType" value="build"/>
+
       <div class="form-grid">
         <div class="field">
           <label>Goal Name</label>
-          <input type="text" id="goalName" placeholder="e.g. Read every day"/>
+          <input type="text" id="goalName" placeholder="e.g. Read every day" oninput="onGoalNameChange()"/>
         </div>
         <div class="field">
           <label>Target Duration (days)</label>
           <input type="number" id="goalDays" placeholder="e.g. 30" min="1"/>
         </div>
       </div>
-      <div class="form-grid">
+      <div class="form-grid" id="cheatRow">
         <div class="field">
           <label>Cheat Days Allowed</label>
           <input type="number" id="goalCheat" placeholder="e.g. 3" min="0" value="0"/>
         </div>
-      </div>
-      <div class="form-grid full">
-        <div class="field">
-          <label>Significance — Why does this matter?</label>
-          <textarea id="goalPurpose" placeholder="e.g. To develop focus and reduce screen time before bed..."></textarea>
+        <div class="field" id="quitLimitField" style="display:none;">
+          <label>Daily Limit (for quit habit)</label>
+          <input type="number" id="goalQuitLimit" placeholder="e.g. 5" min="1"/>
         </div>
       </div>
+
+      <!-- Auto-generated significance -->
+      <div id="sigWrap" style="display:none;"></div>
+      <input type="hidden" id="goalPurpose"/>
+
       <div class="form-actions">
         <button class="btn btn-primary" onclick="saveGoal()">Save Goal</button>
         <button class="btn btn-ghost" onclick="resetForm()">Clear</button>
@@ -541,6 +797,7 @@ nav {
       <p>Progress, streaks, and the reasons behind the work.</p>
     </div>
     <div class="metrics-row" id="metricsRow"></div>
+    <div class="insight-filter-tabs" id="insightFilterTabs"></div>
     <div class="section-label">Your Why</div>
     <div id="quotesWrap"></div>
     <div class="section-label" style="margin-top:20px">Goal Deep-Dives</div>
@@ -556,6 +813,10 @@ nav {
       <p>Daily weigh-ins. Small changes, long trends.</p>
     </div>
     <div class="weight-input-card">
+      <div class="weight-date-selector">
+        <span class="weight-date-label">Date</span>
+        <input type="date" class="weight-date-input" id="weightDateInput"/>
+      </div>
       <div class="weight-top">
         <div style="display:flex;align-items:flex-end;gap:8px;">
           <input type="number" step="0.1" class="weight-big-input" id="weightInput" value="78.1"/>
@@ -570,12 +831,12 @@ nav {
         <span class="avg-label">7-Day Rolling Avg</span>
         <span class="avg-val" id="rollingAvg">—</span>
       </div>
-      <button class="btn btn-primary" onclick="logWeight()">Log Today's Weight</button>
+      <button class="btn btn-primary" onclick="logWeight()">Log Weight</button>
     </div>
     <div class="section-label">Weight Log</div>
     <div class="weight-table-wrap">
       <table class="weight-table">
-        <thead><tr><th>Date</th><th>Weight (kg)</th><th>Δ Change</th><th>7d Avg</th></tr></thead>
+        <thead><tr><th>Date</th><th>Weight (kg)</th><th>Δ Change</th><th>7d Avg</th><th></th></tr></thead>
         <tbody id="weightTableBody"></tbody>
       </table>
     </div>
@@ -584,18 +845,23 @@ nav {
 
 <script>
 // ── STORAGE ──────────────────────────────────────────
-const GOALS_KEY  = 'ch_goals_v2';
-const LOGS_KEY   = 'ch_logs_v2';
+const GOALS_KEY  = 'ch_goals_v3';
+const LOGS_KEY   = 'ch_logs_v3';
 const WEIGHT_KEY = 'ch_weights_v2';
-const ENERGY_KEY = 'ch_energy';
+const TODO_KEY   = 'ch_todos_v1';
+const QUIT_KEY   = 'ch_quit_counts_v1'; // {goalId_date: count}
 
 function load(key) { try { return JSON.parse(localStorage.getItem(key)) || []; } catch { return []; } }
+function loadObj(key) { try { return JSON.parse(localStorage.getItem(key)) || {}; } catch { return {}; } }
 function save(key, d) { localStorage.setItem(key, JSON.stringify(d)); }
 function uid() { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
 function todayStr() { return new Date().toISOString().slice(0, 10); }
 function formatDate(s) {
   return new Date(s + 'T00:00:00').toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
 }
+
+// Selected date for dashboard
+let selectedDate = todayStr();
 
 // ── MIDNIGHT RESET ───────────────────────────────────
 function checkMidnightReset() {
@@ -668,67 +934,110 @@ function getMissedConsecutive(goalId, logs) {
     const d = new Date(today); d.setDate(d.getDate() - i);
     const ds = d.toISOString().slice(0,10);
     const log = logs.find(l => l.goalId === goalId && l.date === ds);
-    if (!log || log.status === 'missed') missed++;
-    else break;
+    if (!log || log.status === 'missed') missed++; else break;
   }
   return missed;
 }
 
-// ── ENERGY ────────────────────────────────────────────
-function updateEnergy(val) {
-  document.getElementById('energyVal').textContent = val;
-  const pct = (val - 1) / 9 * 100;
-  document.getElementById('energySlider').style.background =
-    `linear-gradient(to right, var(--accent) 0%, var(--accent) ${pct}%, var(--dim) ${pct}%, var(--dim) 100%)`;
-  save(ENERGY_KEY, val);
+// ── DATE SCROLLER ─────────────────────────────────────
+function buildDateScroller() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const selD = new Date(selectedDate + 'T00:00:00');
+  const monthLabel = document.getElementById('monthYearLabel');
+
+  // Show month/year of center date
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  monthLabel.innerHTML = `${monthNames[selD.getMonth()]} <span>${selD.getFullYear()}</span>`;
+
+  const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const scroller = document.getElementById('dateScroller');
+  scroller.innerHTML = '';
+
+  // 2 before, today (center), 2 after
+  for (let offset = -2; offset <= 2; offset++) {
+    const d = new Date(selD); d.setDate(d.getDate() + offset);
+    const ds = d.toISOString().slice(0,10);
+    const isCenter = offset === 0;
+    const isToday = ds === todayStr();
+    const pill = document.createElement('div');
+    pill.className = 'date-pill' + (isCenter ? ' active' : '');
+    pill.innerHTML = `<div class="date-pill-day">${dayNames[d.getDay()]}</div><div class="date-pill-num">${d.getDate()}</div>`;
+    if (isToday && !isCenter) pill.style.borderColor = 'rgba(78,205,196,0.4)';
+    pill.onclick = () => { selectedDate = ds; buildDateScroller(); renderDashGoalCards(); renderTodos(); };
+    scroller.appendChild(pill);
+  }
 }
 
 // ── PAGE A: DASHBOARD ─────────────────────────────────
 function renderDashboard() {
-  const now = new Date();
-  document.getElementById('dateNum').textContent = now.getDate();
-  document.getElementById('dateSub').innerHTML =
-    now.toLocaleDateString('en-US', { weekday:'long' }) + ' &nbsp;·&nbsp; ' +
-    now.toLocaleDateString('en-US', { month:'long' }) +
-    ' <span class="date-year">' + now.getFullYear() + '</span>';
-
-  const energy = localStorage.getItem(ENERGY_KEY) || 5;
-  document.getElementById('energySlider').value = energy;
-  updateEnergy(energy);
+  buildDateScroller();
 
   const goals = load(GOALS_KEY);
   const logs  = load(LOGS_KEY);
-  const today = todayStr();
 
-  // Recovery banners
+  // Recovery banners (only for today)
   const bannerWrap = document.getElementById('recoveryBanners');
   bannerWrap.innerHTML = '';
-  goals.forEach(g => {
-    const missed = getMissedConsecutive(g.id, logs);
-    const en = parseInt(localStorage.getItem(ENERGY_KEY) || 5);
-    if (missed === 1) {
-      bannerWrap.innerHTML += `<div class="recovery-banner"><div class="rb-icon">⚠️</div><div class="rb-body"><div class="rb-title">Streak Warning — ${g.name}</div><div class="rb-msg">You missed yesterday. Don't miss today — two in a row breaks the streak.</div></div></div>`;
-    } else if (missed === 2) {
-      const hint = en <= 4 ? 'Try a 2-minute version today — the minimum counts.' : 'Two days missed. A half-effort session today saves your momentum.';
-      bannerWrap.innerHTML += `<div class="recovery-banner"><div class="rb-icon">🛟</div><div class="rb-body"><div class="rb-title">Buffer Mode — ${g.name}</div><div class="rb-msg">${hint}</div></div></div>`;
-    } else if (missed >= 3) {
-      bannerWrap.innerHTML += `<div class="recovery-banner"><div class="rb-icon">🔄</div><div class="rb-body"><div class="rb-title">Re-commitment Needed — ${g.name}</div><div class="rb-msg">3+ days missed. Tap complete today to restart your streak fresh.</div></div></div>`;
-    }
-  });
+  if (selectedDate === todayStr()) {
+    goals.forEach(g => {
+      if (g.type === 'quit') return;
+      const missed = getMissedConsecutive(g.id, logs);
+      if (missed === 1) {
+        bannerWrap.innerHTML += `<div class="recovery-banner"><div class="rb-icon">⚠️</div><div class="rb-body"><div class="rb-title">Streak Warning — ${g.name}</div><div class="rb-msg">You missed yesterday. Don't miss today — two in a row breaks the streak.</div></div></div>`;
+      } else if (missed === 2) {
+        bannerWrap.innerHTML += `<div class="recovery-banner"><div class="rb-icon">🛟</div><div class="rb-body"><div class="rb-title">Buffer Mode — ${g.name}</div><div class="rb-msg">Two days missed. A half-effort session today saves your momentum.</div></div></div>`;
+      } else if (missed >= 3) {
+        bannerWrap.innerHTML += `<div class="recovery-banner"><div class="rb-icon">🔄</div><div class="rb-body"><div class="rb-title">Re-commitment Needed — ${g.name}</div><div class="rb-msg">3+ days missed. Tap complete today to restart your streak fresh.</div></div></div>`;
+      }
+    });
+  }
 
+  renderDashGoalCards();
+  renderTodos();
+}
+
+function renderDashGoalCards() {
+  const goals = load(GOALS_KEY);
+  const logs  = load(LOGS_KEY);
+  const quitCounts = loadObj(QUIT_KEY);
   const wrap = document.getElementById('dashGoalCards');
+
   if (!goals.length) {
     wrap.innerHTML = `<div class="empty-state"><strong>No goals yet</strong>Head to Goals to create your first one.</div>`;
     return;
   }
 
-  const en = parseInt(localStorage.getItem(ENERGY_KEY) || 5);
-
   wrap.innerHTML = goals.map(g => {
-    const todayLog   = logs.find(l => l.goalId === g.id && l.date === today);
-    const todayStatus = todayLog ? todayLog.status : null;
-    const isDone  = todayStatus === 'complete' || todayStatus === true;
-    const isCheat = todayStatus === 'cheat';
+    const dateLog = logs.find(l => l.goalId === g.id && l.date === selectedDate);
+    const dateStatus = dateLog ? dateLog.status : null;
+
+    if (g.type === 'quit') {
+      // Quit habit card
+      const qKey = g.id + '_' + selectedDate;
+      const todayCount = quitCounts[qKey] || 0;
+      const limit = g.quitLimit || 1;
+      const exceeded = todayCount >= limit;
+      return `<div class="goal-card quit-type" id="card-${g.id}">
+        <div class="goal-info">
+          <div class="goal-name">🚫 ${g.name}</div>
+          <div class="goal-meta">
+            <span class="quit-chip">Quit Habit</span>
+            ${exceeded ? '<span class="warning-chip">⚠ Limit reached</span>' : ''}
+          </div>
+        </div>
+        <div class="goal-right">
+          <div class="quit-counter-wrap">
+            <div class="quit-counter-frac" style="${exceeded ? 'color:var(--red)' : ''}">${todayCount}<span style="color:var(--muted);font-size:16px;">/${limit}</span></div>
+            <div class="quit-counter-label">today</div>
+          </div>
+          <button class="quit-add-btn" onclick="incrementQuit('${g.id}')">+ Log One</button>
+        </div>
+      </div>`;
+    }
+
+    // Build habit card
+    const isDone  = dateStatus === 'complete' || dateStatus === true;
+    const isCheat = dateStatus === 'cheat';
     const missed  = getMissedConsecutive(g.id, logs);
 
     const completedDays = new Set(logs.filter(l => l.goalId === g.id && (l.status === 'complete' || l.status === true)).map(l => l.date)).size;
@@ -740,15 +1049,9 @@ function renderDashboard() {
     let hearts = '';
     for (let i = 0; i < cheatAllowed; i++) hearts += i < cheatUsed ? '🩶' : '❤️';
 
-    const cardClass    = isDone ? 'done' : isCheat ? 'cheat' : missed >= 1 ? 'warning' : '';
+    const cardClass    = isDone ? 'done' : isCheat ? 'cheat' : missed >= 1 && selectedDate === todayStr() ? 'warning' : '';
     const toggleIcon   = isDone ? '✓' : isCheat ? '◑' : '';
     const cheatDisabled = cheatLeft <= 0 || isDone || isCheat;
-
-    let adaptHint = '';
-    if (!isDone && !isCheat) {
-      if (en >= 8) adaptHint = `<span style="font-size:10px;color:var(--accent);opacity:0.8">⚡ Push mode</span>`;
-      else if (en <= 3) adaptHint = `<span style="font-size:10px;color:var(--warn)">🌿 Conservation</span>`;
-    }
 
     return `<div class="goal-card ${cardClass}" id="card-${g.id}">
       <button class="goal-toggle" onclick="toggleGoal('${g.id}')">${toggleIcon}</button>
@@ -756,8 +1059,7 @@ function renderDashboard() {
         <div class="goal-name">${g.name}</div>
         <div class="goal-meta">
           ${streak > 0 ? `<span class="streak-chip">${streak}d streak</span>` : ''}
-          ${missed >= 1 && !isDone && !isCheat ? `<span class="warning-chip">${missed} missed</span>` : ''}
-          ${adaptHint}
+          ${missed >= 1 && !isDone && !isCheat && selectedDate === todayStr() ? `<span class="warning-chip">${missed} missed</span>` : ''}
         </div>
         ${cheatAllowed > 0 ? `<div class="cheat-bank" title="${cheatLeft} cheat days left">${hearts}</div>` : ''}
       </div>
@@ -769,18 +1071,30 @@ function renderDashboard() {
   }).join('');
 }
 
+function incrementQuit(goalId) {
+  const quitCounts = loadObj(QUIT_KEY);
+  const qKey = goalId + '_' + selectedDate;
+  quitCounts[qKey] = (quitCounts[qKey] || 0) + 1;
+  save(QUIT_KEY, quitCounts);
+  const g = load(GOALS_KEY).find(g => g.id === goalId);
+  const limit = g ? (g.quitLimit || 1) : 1;
+  const count = quitCounts[qKey];
+  if (count >= limit) toast(`⚠ Daily limit of ${limit} reached for "${g ? g.name : 'goal'}"`, 'warn');
+  else toast(`Logged: ${count}/${limit} today`);
+  renderDashGoalCards();
+}
+
 function toggleGoal(goalId) {
   const logs  = load(LOGS_KEY);
-  const today = todayStr();
-  const idx   = logs.findIndex(l => l.goalId === goalId && l.date === today);
+  const idx   = logs.findIndex(l => l.goalId === goalId && l.date === selectedDate);
   if (idx !== -1) {
     if (isGood(logs[idx].status) && logs[idx].status !== 'cheat') logs.splice(idx, 1);
     else logs[idx].status = 'complete';
   } else {
-    logs.push({ goalId, date: today, status: 'complete' });
+    logs.push({ goalId, date: selectedDate, status: 'complete' });
   }
   save(LOGS_KEY, logs);
-  renderDashboard();
+  renderDashGoalCards();
 }
 
 function useCheatDay(goalId) {
@@ -790,32 +1104,170 @@ function useCheatDay(goalId) {
   if (!g) return;
   const cheatUsed = logs.filter(l => l.goalId === goalId && l.status === 'cheat').length;
   if (cheatUsed >= g.cheatDays) { toast('No cheat days remaining!', 'warn'); return; }
-  const today = todayStr();
-  const idx   = logs.findIndex(l => l.goalId === goalId && l.date === today);
+  const idx = logs.findIndex(l => l.goalId === goalId && l.date === selectedDate);
   if (idx !== -1) logs[idx].status = 'cheat';
-  else logs.push({ goalId, date: today, status: 'cheat' });
+  else logs.push({ goalId, date: selectedDate, status: 'cheat' });
   save(LOGS_KEY, logs);
   toast('Safe Miss used 🛡');
-  renderDashboard();
+  renderDashGoalCards();
+}
+
+// ── TODOS ─────────────────────────────────────────────
+function renderTodos() {
+  const todos = load(TODO_KEY);
+  const list = document.getElementById('todoList');
+  if (!todos.length) {
+    list.innerHTML = `<div style="font-size:12px;color:var(--muted);text-align:center;padding:12px 0;">No tasks yet. Tap + to add one.</div>`;
+    return;
+  }
+  list.innerHTML = todos.map(t => `
+    <div class="todo-item${t.done ? ' completed' : ''}" id="todo-${t.id}" 
+         ontouchstart="todoTouchStart(event, '${t.id}')"
+         ontouchend="todoTouchEnd(event, '${t.id}')">
+      <button class="todo-checkbox" onclick="toggleTodo('${t.id}')">${t.done ? '✓' : ''}</button>
+      <span class="todo-text">${escapeHtml(t.text)}</span>
+      <div class="todo-delete-btn" onclick="deleteTodo('${t.id}')">Delete</div>
+    </div>`).join('');
+}
+
+let touchStartX = 0;
+function todoTouchStart(e, id) {
+  touchStartX = e.touches[0].clientX;
+}
+function todoTouchEnd(e, id) {
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  const el = document.getElementById('todo-' + id);
+  if (!el) return;
+  if (dx < -50) el.classList.add('swiped');
+  else if (dx > 20) el.classList.remove('swiped');
+}
+
+function toggleTodoInput() {
+  const wrap = document.getElementById('todoInputWrap');
+  const visible = wrap.style.display !== 'none';
+  wrap.style.display = visible ? 'none' : 'flex';
+  if (!visible) document.getElementById('todoInput').focus();
+}
+
+function addTodo() {
+  const input = document.getElementById('todoInput');
+  const text = input.value.trim();
+  if (!text) return;
+  const todos = load(TODO_KEY);
+  todos.push({ id: uid(), text, done: false, createdAt: new Date().toISOString() });
+  save(TODO_KEY, todos);
+  input.value = '';
+  renderTodos();
+}
+
+function toggleTodo(id) {
+  const todos = load(TODO_KEY);
+  const t = todos.find(t => t.id === id);
+  if (t) t.done = !t.done;
+  save(TODO_KEY, todos);
+  renderTodos();
+}
+
+function deleteTodo(id) {
+  save(TODO_KEY, load(TODO_KEY).filter(t => t.id !== id));
+  renderTodos();
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 // ── PAGE B: GOALS ─────────────────────────────────────
+let goalNameDebounce = null;
+let currentGoalType = 'build';
+
+function selectGoalType(type) {
+  currentGoalType = type;
+  document.getElementById('goalType').value = type;
+  document.getElementById('typeBtnBuild').className = 'type-btn' + (type === 'build' ? ' build-active' : '');
+  document.getElementById('typeBtnQuit').className = 'type-btn' + (type === 'quit' ? ' quit-active' : '');
+  document.getElementById('quitLimitField').style.display = type === 'quit' ? 'flex' : 'none';
+  onGoalNameChange();
+}
+
+function onGoalNameChange() {
+  clearTimeout(goalNameDebounce);
+  const name = document.getElementById('goalName').value.trim();
+  const type = document.getElementById('goalType').value;
+  if (!name) { document.getElementById('sigWrap').style.display = 'none'; return; }
+  document.getElementById('sigWrap').style.display = 'block';
+  document.getElementById('sigWrap').innerHTML = `<div class="sig-generating"><div class="sig-dot"></div>Generating significance…</div>`;
+  goalNameDebounce = setTimeout(() => generateSignificance(name, type), 800);
+}
+
+function generateSignificance(name, type) {
+  const buildReasons = {
+    'read': 'Reading expands your mind, builds vocabulary, reduces stress, and trains deep focus — a cornerstone habit of every high performer.',
+    'exercise': 'Consistent exercise improves mood, energy, and longevity. It builds discipline that spills into every area of life.',
+    'meditat': 'Meditation rewires your brain for calm and clarity. It is one of the most evidence-backed habits for mental resilience.',
+    'journal': 'Journaling accelerates self-awareness and emotional processing — turning experience into growth.',
+    'water': 'Hydration directly impacts cognitive performance, mood, and physical energy. Small habit, massive returns.',
+    'sleep': 'Quality sleep is the foundation of performance. Without it, every other habit suffers.',
+    'run': 'Running builds cardiovascular health, mental toughness, and consistent daily energy.',
+    'walk': 'Daily walking reduces anxiety, boosts creativity, and maintains metabolic health effortlessly.',
+    'code': 'Coding daily builds compound skill — small sessions accumulate into expertise over months.',
+    'learn': 'Daily learning keeps your mind sharp and compounds knowledge into career and life advantage.',
+  };
+  const quitReasons = {
+    'coffee': 'Reducing caffeine intake improves sleep quality, reduces anxiety, and stabilises your daily energy levels.',
+    'smoke': 'Cutting back on smoking dramatically improves lung capacity, circulation, and long-term health outcomes.',
+    'alcohol': 'Reducing alcohol intake improves sleep depth, mental clarity, and long-term liver and cardiovascular health.',
+    'sugar': 'Less sugar means more stable blood glucose, better skin, improved mood, and reduced inflammation.',
+    'social media': 'Reducing social media intake reclaims focus, reduces comparison anxiety, and creates space for real presence.',
+    'phone': 'Less screen time improves sleep, attention span, and the quality of real-world relationships.',
+    'junk': 'Reducing junk food intake stabilises energy, mood, and supports long-term metabolic health.',
+    'snack': 'Mindful snacking prevents caloric excess and keeps your energy levels more consistent throughout the day.',
+  };
+
+  const nameLower = name.toLowerCase();
+  let sig = '';
+
+  if (type === 'quit') {
+    for (const [key, val] of Object.entries(quitReasons)) {
+      if (nameLower.includes(key)) { sig = val; break; }
+    }
+    if (!sig) sig = `Quitting or reducing "${name}" builds self-discipline and frees up mental and physical energy for the things that truly matter to you.`;
+  } else {
+    for (const [key, val] of Object.entries(buildReasons)) {
+      if (nameLower.includes(key)) { sig = val; break; }
+    }
+    if (!sig) sig = `Building the habit of "${name}" creates compounding growth — each day adds to a foundation of consistency that defines who you become over time.`;
+  }
+
+  document.getElementById('goalPurpose').value = sig;
+  document.getElementById('sigWrap').innerHTML = `<div class="sig-generated"><div class="sig-generated-label">✦ Auto-generated significance</div>${sig}</div>`;
+}
+
 function saveGoal() {
   const name    = document.getElementById('goalName').value.trim();
   const days    = parseInt(document.getElementById('goalDays').value);
   const cheat   = parseInt(document.getElementById('goalCheat').value) || 0;
   const purpose = document.getElementById('goalPurpose').value.trim();
   const editId  = document.getElementById('editGoalId').value;
+  const type    = document.getElementById('goalType').value || 'build';
+  const quitLimit = parseInt(document.getElementById('goalQuitLimit').value) || null;
 
   if (!name || !days || days < 1) { toast('Please fill in Goal Name and Target Days.', 'warn'); return; }
+
+  // Auto-generate significance if not already set
+  let finalPurpose = purpose;
+  if (!finalPurpose) {
+    generateSignificance(name, type);
+    finalPurpose = document.getElementById('goalPurpose').value;
+  }
 
   const goals = load(GOALS_KEY);
   if (editId) {
     const idx = goals.findIndex(g => g.id === editId);
-    if (idx !== -1) goals[idx] = { ...goals[idx], name, totalDays: days, cheatDays: cheat, purpose };
+    if (idx !== -1) goals[idx] = { ...goals[idx], name, totalDays: days, cheatDays: cheat, purpose: finalPurpose, type, quitLimit };
     toast('Goal updated.');
   } else {
-    goals.push({ id: uid(), name, totalDays: days, cheatDays: cheat, purpose, createdAt: new Date().toISOString() });
+    goals.push({ id: uid(), name, totalDays: days, cheatDays: cheat, purpose: finalPurpose, type, quitLimit, createdAt: new Date().toISOString() });
     toast('Goal created! 🎯');
   }
   save(GOALS_KEY, goals);
@@ -831,6 +1283,12 @@ function editGoal(id) {
   document.getElementById('goalDays').value    = g.totalDays;
   document.getElementById('goalCheat').value   = g.cheatDays;
   document.getElementById('goalPurpose').value = g.purpose || '';
+  selectGoalType(g.type || 'build');
+  if (g.quitLimit) document.getElementById('goalQuitLimit').value = g.quitLimit;
+  if (g.purpose) {
+    document.getElementById('sigWrap').style.display = 'block';
+    document.getElementById('sigWrap').innerHTML = `<div class="sig-generated"><div class="sig-generated-label">✦ Significance</div>${g.purpose}</div>`;
+  }
   document.getElementById('formTitle').textContent = 'Edit Goal';
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -844,9 +1302,12 @@ function deleteGoal(id) {
 }
 
 function resetForm() {
-  ['editGoalId','goalName','goalDays','goalPurpose'].forEach(id => document.getElementById(id).value = '');
+  ['editGoalId','goalName','goalDays','goalQuitLimit'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('goalCheat').value = '0';
+  document.getElementById('goalPurpose').value = '';
   document.getElementById('formTitle').textContent = 'New Goal';
+  document.getElementById('sigWrap').style.display = 'none';
+  selectGoalType('build');
 }
 
 function renderGoalsPage() {
@@ -857,57 +1318,126 @@ function renderGoalsPage() {
     wrap.innerHTML = `<div class="empty-state"><strong>No goals yet</strong>Create your first goal above.</div>`;
     return;
   }
-  wrap.innerHTML = `<table class="goals-table">
-    <thead><tr><th>Goal</th><th>Progress</th><th>Cheat Bank</th><th>Streak</th><th></th></tr></thead>
-    <tbody>${goals.map(g => {
-      const done      = new Set(logs.filter(l => l.goalId === g.id && (l.status === 'complete' || l.status === true)).map(l => l.date)).size;
-      const cheatUsed = logs.filter(l => l.goalId === g.id && l.status === 'cheat').length;
-      const pct       = Math.round((done / g.totalDays) * 100);
-      const streak    = calcStreak(g.id, logs);
-      return `<tr>
-        <td><strong>${g.name}</strong>${g.purpose ? `<br><span style="font-size:11px;color:var(--muted);font-style:italic">${g.purpose.slice(0,50)}${g.purpose.length>50?'…':''}</span>` : ''}</td>
-        <td><span class="badge">${done}/${g.totalDays} · ${pct}%</span></td>
-        <td><span class="badge">${cheatUsed}/${g.cheatDays}</span></td>
-        <td><span class="badge">${streak}d</span></td>
-        <td style="display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap;">
+
+  wrap.innerHTML = goals.map(g => {
+    const isQuit = g.type === 'quit';
+    const done      = isQuit ? 0 : new Set(logs.filter(l => l.goalId === g.id && (l.status === 'complete' || l.status === true)).map(l => l.date)).size;
+    const cheatUsed = logs.filter(l => l.goalId === g.id && l.status === 'cheat').length;
+    const pct       = isQuit ? 0 : Math.round((done / g.totalDays) * 100);
+    const streak    = isQuit ? 0 : calcStreak(g.id, logs);
+
+    return `<div class="active-goal-card ${isQuit ? 'quit-type' : ''}">
+      <div class="agc-top">
+        <div>
+          <span class="agc-name">${g.name}</span>
+          <span class="agc-type-badge ${isQuit ? 'quit' : 'build'}">${isQuit ? '🚫 Quit' : '🌱 Build'}</span>
+        </div>
+        <div class="agc-actions">
           <button class="btn btn-ghost btn-sm" onclick="editGoal('${g.id}')">Edit</button>
           <button class="btn btn-danger btn-sm" onclick="deleteGoal('${g.id}')">Delete</button>
-        </td>
-      </tr>`;
-    }).join('')}</tbody>
-  </table>`;
+        </div>
+      </div>
+      ${!isQuit ? `<div class="agc-progress">
+        <div class="agc-stats">
+          <div class="agc-stat"><strong>${done}/${g.totalDays}</strong> days</div>
+          <div class="agc-stat"><strong>${pct}%</strong> complete</div>
+          <div class="agc-stat"><strong>${streak}d</strong> streak</div>
+          ${g.cheatDays > 0 ? `<div class="agc-stat"><strong>${cheatUsed}/${g.cheatDays}</strong> safe misses</div>` : ''}
+        </div>
+        <div class="agc-progress-bar-wrap"><div class="agc-progress-bar" style="width:${pct}%"></div></div>
+      </div>` : `<div class="agc-stats" style="margin-bottom:8px;">
+        <div class="agc-stat">Daily limit: <strong>${g.quitLimit || 'N/A'}</strong></div>
+      </div>`}
+      ${g.purpose ? `<div class="agc-sig">"${g.purpose}"</div>` : ''}
+    </div>`;
+  }).join('');
 }
 
 // ── PAGE C: INSIGHTS ──────────────────────────────────
+let insightFilter = 'all';
+
 function renderInsights() {
   const goals = load(GOALS_KEY);
   const logs  = load(LOGS_KEY);
 
-  let totalDone = 0, totalTarget = 0, maxStreak = 0;
+  let totalDone = 0, totalTarget = 0, maxStreak = 0, totalCompleted = 0;
   goals.forEach(g => {
+    if (g.type === 'quit') return;
     const done = new Set(logs.filter(l => l.goalId === g.id && (l.status === 'complete' || l.status === true)).map(l => l.date)).size;
     totalDone   += done;
     totalTarget += g.totalDays;
     maxStreak    = Math.max(maxStreak, calcStreak(g.id, logs));
+    totalCompleted++;
   });
   const overallPct = totalTarget ? Math.round((totalDone / totalTarget) * 100) : 0;
+  const todayDone = goals.filter(g => g.type !== 'quit' && logs.some(l => l.goalId === g.id && l.date === todayStr() && isGood(l.status))).length;
 
   document.getElementById('metricsRow').innerHTML = `
-    <div class="metric-card"><div class="metric-value">${goals.length}</div><div class="metric-label">Active Goals</div></div>
-    <div class="metric-card"><div class="metric-value">${maxStreak}</div><div class="metric-label">Best Streak</div></div>
-    <div class="metric-card"><div class="metric-value">${overallPct}%</div><div class="metric-label">Completion</div></div>`;
+    <div class="metric-card" onclick="toast('${goals.length} goal(s) active')"><div class="metric-value">${goals.length}</div><div class="metric-label">Active Goals</div></div>
+    <div class="metric-card" onclick="toast('Best current streak: ${maxStreak} days')"><div class="metric-value">${maxStreak}</div><div class="metric-label">Best Streak</div></div>
+    <div class="metric-card" onclick="toast('Overall: ${totalDone}/${totalTarget} days completed')"><div class="metric-value">${overallPct}%</div><div class="metric-label">Completion</div></div>`;
+
+  // Filter tabs
+  const filterTabsWrap = document.getElementById('insightFilterTabs');
+  const filters = [{ id: 'all', label: 'All Goals' }, { id: 'build', label: '🌱 Build' }, { id: 'quit', label: '🚫 Quit' }];
+  filterTabsWrap.innerHTML = filters.map(f =>
+    `<div class="insight-filter-tab${insightFilter === f.id ? ' active' : ''}" onclick="setInsightFilter('${f.id}')">${f.label}</div>`
+  ).join('');
 
   // Significance quotes
   const qWrap = document.getElementById('quotesWrap');
   const withP = goals.filter(g => g.purpose);
   qWrap.innerHTML = withP.length
-    ? withP.map(g => `<div class="quote-block"><div class="quote-text">"${g.purpose}"</div><div class="quote-source">— ${g.name}</div></div>`).join('')
-    : `<div class="empty-state"><strong>No significance written</strong>Add a "Why" to your goals to see it here.</div>`;
+    ? withP.map(g => `<div class="quote-block"><div class="quote-text">"${g.purpose}"</div><div class="quote-source">— ${g.name} ${g.type === 'quit' ? '(Quit)' : '(Build)'}</div></div>`).join('')
+    : `<div class="empty-state"><strong>No goals yet</strong>Add goals to see their significance here.</div>`;
 
   const wrap = document.getElementById('insightCards');
-  if (!goals.length) { wrap.innerHTML = `<div class="empty-state"><strong>Nothing to show</strong>Create goals first.</div>`; return; }
+  let filteredGoals = goals;
+  if (insightFilter === 'build') filteredGoals = goals.filter(g => g.type !== 'quit');
+  else if (insightFilter === 'quit') filteredGoals = goals.filter(g => g.type === 'quit');
 
-  wrap.innerHTML = goals.map(g => {
+  if (!filteredGoals.length) { wrap.innerHTML = `<div class="empty-state"><strong>Nothing to show</strong>No goals match this filter.</div>`; return; }
+
+  const tooltip = document.getElementById('hmTooltip');
+
+  wrap.innerHTML = filteredGoals.map(g => {
+    if (g.type === 'quit') {
+      // Quit habit insights
+      const quitCounts = loadObj(QUIT_KEY);
+      const last7 = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(); d.setDate(d.getDate() - i);
+        const ds = d.toISOString().slice(0,10);
+        const count = quitCounts[g.id + '_' + ds] || 0;
+        last7.push({ ds, count });
+      }
+      const avg = last7.reduce((s, x) => s + x.count, 0) / 7;
+      const limit = g.quitLimit || 1;
+      return `<div class="insight-card quit-type">
+        <div class="insight-goal-name">🚫 ${g.name}</div>
+        ${g.purpose ? `<div class="insight-why">"${g.purpose}"</div>` : ''}
+        <div class="streak-row">
+          <div class="streak-box"><div class="streak-box-val">${avg.toFixed(1)}</div><div class="streak-box-label">7d Daily Avg</div></div>
+          <div class="streak-box"><div class="streak-box-val" style="color:var(--quit-color)">${limit}</div><div class="streak-box-label">Daily Limit</div></div>
+        </div>
+        <div class="heatmap-inner">
+          <div class="heatmap-title">Last 7 Days</div>
+          <div style="display:flex;gap:8px;align-items:flex-end;height:60px;">
+            ${last7.map(({ds, count}) => {
+              const h = limit > 0 ? Math.min(count / limit, 1) * 50 : 0;
+              const over = count > limit;
+              return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;">
+                <div style="font-size:9px;color:${over ? 'var(--red)' : 'var(--muted)'};">${count}</div>
+                <div style="width:100%;height:${Math.max(h, 4)}px;border-radius:4px 4px 0 0;background:${over ? 'var(--red)' : 'var(--quit-color)'};opacity:0.8;"></div>
+                <div style="font-size:8px;color:var(--muted);">${new Date(ds+'T00:00:00').getDate()}</div>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>
+      </div>`;
+    }
+
+    // Build habit insights
     const done       = new Set(logs.filter(l => l.goalId === g.id && (l.status === 'complete' || l.status === true)).map(l => l.date)).size;
     const cheatUsed  = logs.filter(l => l.goalId === g.id && l.status === 'cheat').length;
     const pct        = Math.round(((done + cheatUsed) / g.totalDays) * 100);
@@ -924,34 +1454,79 @@ function renderInsights() {
       const ds = d.toISOString().slice(0,10);
       const log = logs.find(l => l.goalId === g.id && l.date === ds);
       let cls = d > todayD ? 'future' : (!log || log.status === 'missed') ? 'missed' : log.status === 'cheat' ? 'cheat' : 'success';
-      cells.push(`<div class="hm-cell ${cls}" title="${ds}"></div>`);
+      const statusLabel = d > todayD ? 'Upcoming' : (!log || log.status === 'missed') ? 'Missed' : log.status === 'cheat' ? 'Safe Miss' : 'Done';
+      cells.push(`<div class="hm-cell ${cls}" data-tip="${ds}: ${statusLabel}"
+        onmouseenter="showHmTip(event, '${ds}: ${statusLabel}')"
+        onmouseleave="hideHmTip()"></div>`);
     }
 
+    // Completion ring SVG
+    const r = 28; const circ = 2 * Math.PI * r;
+    const dash = (pct / 100) * circ;
+
     return `<div class="insight-card">
-      <div class="insight-goal-name">${g.name}</div>
-      ${g.purpose ? `<div class="insight-why">"${g.purpose}"</div>` : ''}
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;">
+        <div>
+          <div class="insight-goal-name">${g.name}</div>
+          ${g.purpose ? `<div class="insight-why">"${g.purpose}"</div>` : ''}
+        </div>
+        <div class="progress-ring-wrap" style="min-width:80px;">
+          <svg width="70" height="70" viewBox="0 0 70 70">
+            <circle cx="35" cy="35" r="${r}" fill="none" stroke="var(--dim)" stroke-width="5"/>
+            <circle cx="35" cy="35" r="${r}" fill="none" stroke="var(--accent)" stroke-width="5"
+              stroke-dasharray="${dash.toFixed(1)} ${circ.toFixed(1)}"
+              stroke-linecap="round" transform="rotate(-90 35 35)"/>
+            <text x="35" y="40" text-anchor="middle" font-family="Sora,sans-serif" font-size="13" font-weight="700" fill="var(--accent)">${pct}%</text>
+          </svg>
+          <div class="progress-ring-label">Progress</div>
+        </div>
+      </div>
       <div class="streak-row">
-        <div class="streak-box"><div class="streak-box-val">${streak}</div><div class="streak-box-label">Current Streak</div></div>
-        <div class="streak-box"><div class="streak-box-val">${best}</div><div class="streak-box-label">All-Time Best</div></div>
+        <div class="streak-box" onclick="toast('Current streak: ${streak} days 🔥')">
+          <div class="streak-box-val">${streak > 0 ? '<span class=\\'flame-anim\\'>🔥</span> ' : ''}${streak}</div>
+          <div class="streak-box-label">Current Streak</div>
+        </div>
+        <div class="streak-box" onclick="toast('Best ever: ${best} days')">
+          <div class="streak-box-val">${best}</div>
+          <div class="streak-box-label">All-Time Best</div>
+        </div>
+        <div class="streak-box" onclick="toast('${done} days completed out of ${g.totalDays}')">
+          <div class="streak-box-val">${done}</div>
+          <div class="streak-box-label">Days Done</div>
+        </div>
       </div>
       <div class="heatmap-inner">
-        <div class="heatmap-title">${g.totalDays}-Day Heatmap</div>
+        <div class="heatmap-title">${g.totalDays}-Day Heatmap <span style="font-size:9px;color:var(--dim);font-weight:400;">(hover for details)</span></div>
         <div class="heatmap-grid">${cells.join('')}</div>
         <div class="heatmap-legend">
           <div class="hm-legend-item"><div class="hm-legend-dot" style="background:var(--accent)"></div>Done</div>
-          <div class="hm-legend-item"><div class="hm-legend-dot" style="background:var(--cheat-color)"></div>Cheat</div>
-          <div class="hm-legend-item"><div class="hm-legend-dot" style="background:var(--red)"></div>Missed</div>
+          <div class="hm-legend-item"><div class="hm-legend-dot" style="background:var(--cheat-color)"></div>Safe Miss</div>
+          <div class="hm-legend-item"><div class="hm-legend-dot" style="background:var(--red);opacity:0.55"></div>Missed</div>
           <div class="hm-legend-item"><div class="hm-legend-dot" style="background:var(--dim)"></div>Upcoming</div>
         </div>
       </div>
       <div class="insight-stats">
         <div class="insight-stat">Completed <strong>${done}/${g.totalDays}</strong></div>
-        <div class="insight-stat">Cheat Used <strong>${cheatUsed}/${g.cheatDays}</strong></div>
+        <div class="insight-stat">Safe Misses <strong>${cheatUsed}/${g.cheatDays}</strong></div>
         <div class="insight-stat">Progress <strong>${pct}%</strong></div>
       </div>
     </div>`;
   }).join('');
 }
+
+function setInsightFilter(f) {
+  insightFilter = f;
+  renderInsights();
+}
+
+function showHmTip(e, text) {
+  const tip = document.getElementById('hmTooltip');
+  tip.textContent = text;
+  tip.style.display = 'block';
+  tip.style.left = (e.clientX + 12) + 'px';
+  tip.style.top  = (e.clientY - 28) + 'px';
+}
+function hideHmTip() { document.getElementById('hmTooltip').style.display = 'none'; }
 
 // ── PAGE D: WEIGHT ─────────────────────────────────────
 function calcRollingAvg(weights, upToDate, days=7) {
@@ -961,17 +1536,28 @@ function calcRollingAvg(weights, upToDate, days=7) {
 
 function logWeight() {
   const val = parseFloat(document.getElementById('weightInput').value);
+  const dateVal = document.getElementById('weightDateInput').value;
   if (isNaN(val) || val <= 0) { toast('Enter a valid weight.', 'warn'); return; }
+  if (!dateVal) { toast('Please select a date.', 'warn'); return; }
   const weights = load(WEIGHT_KEY);
-  const today   = todayStr();
-  const idx     = weights.findIndex(w => w.date === today);
+  const idx = weights.findIndex(w => w.date === dateVal);
   if (idx !== -1) { weights[idx].value = val; toast('Weight updated.'); }
-  else { weights.push({ date: today, value: val }); toast('Weight logged! ⚖️'); }
+  else { weights.push({ date: dateVal, value: val }); toast('Weight logged! ⚖️'); }
   save(WEIGHT_KEY, weights);
   renderWeightLog();
 }
 
+function deleteWeight(date) {
+  save(WEIGHT_KEY, load(WEIGHT_KEY).filter(w => w.date !== date));
+  toast('Entry deleted.');
+  renderWeightLog();
+}
+
 function renderWeightLog() {
+  // Set default date to today
+  const dateInput = document.getElementById('weightDateInput');
+  if (!dateInput.value) dateInput.value = todayStr();
+
   const weights = load(WEIGHT_KEY).sort((a,b) => b.date.localeCompare(a.date));
   const trendEl = document.getElementById('weightTrend');
   const avgEl   = document.getElementById('rollingAvg');
@@ -991,7 +1577,7 @@ function renderWeightLog() {
 
   const tbody = document.getElementById('weightTableBody');
   if (!weights.length) {
-    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:32px;font-size:12px;">No entries yet — log your first weight above.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:32px;font-size:12px;">No entries yet — log your first weight above.</td></tr>`;
     return;
   }
   tbody.innerHTML = weights.map((w, i) => {
@@ -1009,6 +1595,7 @@ function renderWeightLog() {
       <td><strong>${w.value.toFixed(1)}</strong></td>
       <td>${diffHtml}</td>
       <td style="color:var(--muted)">${ra !== null ? ra.toFixed(1) : '—'}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteWeight('${w.date}')">✕</button></td>
     </tr>`;
   }).join('');
 }
